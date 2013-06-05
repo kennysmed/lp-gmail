@@ -1,5 +1,5 @@
 # coding: utf-8
-gem 'oauth2'
+require 'oauth2'
 require 'sinatra'
 
 enable :sessions
