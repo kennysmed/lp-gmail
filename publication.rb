@@ -59,6 +59,11 @@ end
 get '/return/' do
   return 500, "No access token was returned by Google" if !params[:code]
 
+  puts "CODE"
+  puts params[:code]
+  puts "TOKEN"
+  puts access_token_obj.refresh_token
+  
   access_token_obj = auth_client.auth_code.get_token(params[:code], {
                       :redirect_uri => url("/return/"),
                       :token_method => :post
