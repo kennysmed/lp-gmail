@@ -1,3 +1,3 @@
-# Empty Little Printer publication
+# Little Printer Gmail publication
 
 In progress.
