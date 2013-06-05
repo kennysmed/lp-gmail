@@ -61,13 +61,13 @@ get '/return/' do
 
   puts "CODE"
   puts params[:code]
-  puts "TOKEN"
-  puts access_token_obj.refresh_token
   
   access_token_obj = auth_client.auth_code.get_token(params[:code], {
                       :redirect_uri => url("/return/"),
                       :token_method => :post
                     })
+  puts "TOKEN"
+  puts access_token_obj.refresh_token
 
   redirect "#{session[:bergcloud_return_url]}?config[access_token]=#{access_token_obj.refresh_token}"
 end
