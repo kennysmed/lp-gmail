@@ -18,6 +18,9 @@ auth_client = OAuth2::Client.new(
     :token_url => '/o/oauth2/token'
   })
 
+# Will be an IMAP connection
+imap = nil
+
 
 configure do
   if settings.development?
@@ -32,9 +35,6 @@ configure do
   else
     REDIS = Redis.new()
   end
-
-  # Will be an IMAP connection
-  IMAP = nil
 end
 
 
@@ -47,25 +47,25 @@ helpers do
     data = {}
 
     begin
-      IMAP.examine(mailbox)
+      imap.examine(mailbox)
     rescue => error
       halt 500, "Error examining #{mailbox}: #{error}"
     end
 
     begin
-      data[:all_count] = IMAP.search(['ALL']).length
+      data[:all_count] = imap.search(['ALL']).length
     rescue => error
       halt 500, "Error counting all in #{mailbox}: #{error}"
     end
 
     begin
-      data[:unseen_count] = IMAP.search(['UNSEEN']).length
+      data[:unseen_count] = imap.search(['UNSEEN']).length
     rescue => error
       halt 500, "Error counting unseen in #{mailbox}: #{error}"
     end
 
     begin
-      data[:flagged_count] = IMAP.search(['FLAGGED']).length
+      data[:flagged_count] = imap.search(['FLAGGED']).length
     rescue => error
       halt 500, "Error counting flagged in #{mailbox}: #{error}"
     end
@@ -74,8 +74,13 @@ helpers do
   end
 
 
-  def imap_connection()
-    Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
+  def imap_connect()
+    imap = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
+  end
+
+
+  def imap_disconnect()
+    imap.disconnect unless imap.disconnected?
   end
 
 
@@ -185,13 +190,13 @@ post '/email/' do
       puts "AUTH"
       puts "EMAIL: "+params[:email]
       puts "TOKEN: "+session[:access_token]
-      IMAP = imap_connection()
-      IMAP.authenticate('XOAUTH2', params[:email], session[:access_token])
+      imap_connect()
+      imap.authenticate('XOAUTH2', params[:email], session[:access_token])
     rescue
       error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
     end
 
-    IMAP.disconnect unless IMAP.disconnected?
+    imap_disconnect()
   end
 
   if error_msg
@@ -230,10 +235,10 @@ get '/edition/' do
   end
 
   begin
-    IMAP = imap_connection()
-    IMAP.authenticate('XOAUTH2', email, refresh_token)
+    imap_connect()
+    imap.authenticate('XOAUTH2', email, refresh_token)
   rescue => error
-    IMAP.disconnect unless IMAP.disconnected?
+    imap_disconnect()
     return 500, "Error when trying to authenticate with Google IMAP: #{error}"
   end
 
@@ -241,7 +246,7 @@ get '/edition/' do
   @mail_data = {:inbox => get_mailbox_data('INBOX'),
                 :important => get_mailbox_data('[Gmail]/Important')}
 
-  IMAP.disconnect unless IMAP.disconnected?
+  imap_disconnect()
 
   erb :publication
 end
