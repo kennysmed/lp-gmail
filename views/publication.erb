@@ -2,7 +2,7 @@
 <meta charset="utf-8">
 <html>
 <head>
-  <title>TITLE</title>
+  <title><%= format_title %></title>
 
   <style type="text/css">
     body {
@@ -18,6 +18,19 @@
 
 </head>
 <body>
+  <h1>Gmail</h1>
+
+  <% @mail_data.each_pair do |mailbox, mdata| %>
+    <h2><%= mailbox.capitalize %></h2>
+
+    <p>
+      Unread: <%= mdata[:unseen_count] %><br />
+      Flagged: <%= mdata[:flagged_count] %><br />
+      Total: <%= mdata[:all_count] %>
+    </p>
+
+    <% end %>
+  <% end %>
 
 </body>
 </html>
