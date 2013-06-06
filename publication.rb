@@ -3,6 +3,7 @@ require 'gmail_xoauth'
 require 'oauth2'
 require 'redis'
 require 'sinatra'
+require 'uuid'
 
 enable :sessions
 
