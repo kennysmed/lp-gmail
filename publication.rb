@@ -33,7 +33,8 @@ configure do
     REDIS = Redis.new()
   end
 
-  IMAP = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
+  # Will be an IMAP connection
+  IMAP = nil
 end
 
 
@@ -70,6 +71,11 @@ helpers do
     end
 
     return data
+  end
+
+
+  def imap_connection()
+    Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
   end
 
 
@@ -179,6 +185,7 @@ post '/email/' do
       puts "AUTH"
       puts "EMAIL: "+params[:email]
       puts "TOKEN: "+session[:access_token]
+      IMAP = imap_connection()
       IMAP.authenticate('XOAUTH2', params[:email], session[:access_token])
     rescue
       error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
@@ -223,8 +230,10 @@ get '/edition/' do
   end
 
   begin
+    IMAP = imap_connection()
     IMAP.authenticate('XOAUTH2', email, refresh_token)
   rescue => error
+    IMAP.disconnect unless IMAP.disconnected?
     return 500, "Error when trying to authenticate with Google IMAP: #{error}"
   end
 
