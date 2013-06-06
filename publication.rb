@@ -18,9 +18,6 @@ auth_client = OAuth2::Client.new(
     :token_url => '/o/oauth2/token'
   })
 
-# Will be an IMAP connection
-imap = nil
-
 
 configure do
   if settings.development?
@@ -43,7 +40,7 @@ helpers do
   # Fetch data about an individual Gmail mailbox.
   # `mailbox` is the name of the mailbox, eg 'INBOX', '[Gmail]/Important'.
   # Returns a hash of information.
-  def get_mailbox_data(mailbox)
+  def get_mailbox_data(imap, mailbox)
     data = {}
 
     begin
@@ -74,13 +71,8 @@ helpers do
   end
 
 
-  def imap_connect()
-    imap = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
-  end
-
-
-  def imap_disconnect()
-    imap.disconnect unless imap.disconnected?
+  def new_imap_connection()
+    Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
   end
 
 
@@ -190,13 +182,13 @@ post '/email/' do
       puts "AUTH"
       puts "EMAIL: "+params[:email]
       puts "TOKEN: "+session[:access_token]
-      imap_connect()
+      imap = new_imap_connection()
       imap.authenticate('XOAUTH2', params[:email], session[:access_token])
     rescue
       error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
     end
 
-    imap_disconnect()
+    imap.disconnect unless imap.disconnected?
   end
 
   if error_msg
@@ -238,18 +230,18 @@ get '/edition/' do
   end
 
   begin
-    imap_connect()
+    imap = new_imap_connection()
     imap.authenticate('XOAUTH2', email, access_token_obj.token)
   rescue => error
-    imap_disconnect()
+    imap.disconnect unless imap.disconnected?
     return 500, "Error when trying to authenticate with Google IMAP: #{error}"
   end
 
   @email_address = email
-  @mail_data = {:inbox => get_mailbox_data('INBOX'),
-                :important => get_mailbox_data('[Gmail]/Important')}
+  @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
+                :important => get_mailbox_data(imap, '[Gmail]/Important')}
 
-  imap_disconnect()
+  imap.disconnect unless imap.disconnected?
 
   erb :publication
 end
