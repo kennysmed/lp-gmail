@@ -136,7 +136,7 @@ get '/return/' do
   # email address.
   session[:refresh_token] = access_token_obj.refresh_token
   # We'll use this in the next stage to check their email address.
-  session[:access_token] = access_token_obj.access_token
+  session[:access_token] = access_token_obj.token
 
   # Now ask for the email address.
   redirect url('/email/')
