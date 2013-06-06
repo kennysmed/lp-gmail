@@ -243,11 +243,15 @@ get '/edition/' do
 
   imap.disconnect unless imap.disconnected?
 
+  # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
+  # Testing, always changing etag:
+  etag Digest::MD5.hexdigest(id + Time.now.strftime('%M%H-%d%m%Y'))
   erb :publication
 end
 
 
 get '/sample/' do
+  etag Digest::MD5.hexdigest('sample' + Date.today.strftime('%d%m%Y'))
   erb :publication
 end
 
