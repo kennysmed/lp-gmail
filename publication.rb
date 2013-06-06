@@ -176,6 +176,9 @@ post '/email/' do
 
   else
     begin
+      puts "AUTH"
+      puts "EMAIL: "+params[:email]
+      puts "TOKEN: "+session[:access_token]
       IMAP.authenticate('XOAUTH2', params[:email], session[:access_token])
     rescue
       error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
@@ -194,6 +197,8 @@ post '/email/' do
     id = UUID.generate
     REDIS.set("user:#{id}:refresh_token", session[:refresh_token])
     REDIS.set("user:#{id}:email", params[:email])
+    session[:access_token] = nil
+    session[:refresh_token] = nil
     redirect "#{session[:bergcloud_return_url]}?config[id]=#{id}"
   end
 end
