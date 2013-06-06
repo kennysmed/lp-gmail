@@ -20,6 +20,8 @@
 <body>
   <h1>Gmail</h1>
 
+  <p>For <%= @email_address %></p>
+
   <% @mail_data.each_pair do |mailbox, mdata| %>
     <h2><%= mailbox.capitalize %></h2>
 
