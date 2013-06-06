@@ -221,6 +221,9 @@ get '/edition/' do
   refresh_token = REDIS.get("user:#{id}:refresh_token")
   email = REDIS.get("user:#{id}:email")
 
+  puts "EDITION AUTH"
+  puts "EMAIL: " + email
+  puts "TOKEN: " + refresh_token
   if !refresh_token || !email
     return 500, "No refresh_token or email found for ID '#{id}'"
   end
@@ -236,7 +239,7 @@ get '/edition/' do
 
   begin
     imap_connect()
-    imap.authenticate('XOAUTH2', email, refresh_token)
+    imap.authenticate('XOAUTH2', email, access_token_obj.token)
   rescue => error
     imap_disconnect()
     return 500, "Error when trying to authenticate with Google IMAP: #{error}"
