@@ -24,10 +24,11 @@ module LpGmail
 
     # Provides the URL to which we send the user for them to authenticate
     # with Google, and approve access.
-    def oauth_authorize_url()
+    # redirect_uri: The URI on this site that has been set as the Return URI.
+    def oauth_authorize_url(redirect_uri)
       @auth_client.auth_code.authorize_url(
                 :scope => 'https://mail.google.com/',
-                :redirect_uri => url('/return/'),
+                :redirect_uri => redirect_uri,
                 :access_type => 'offline',
                 :approval_prompt => 'force'
               )
@@ -59,7 +60,7 @@ module LpGmail
     def test_imap_authentication(email, access_token)
       success = true
       imap = new_imap_connection()
-      
+
       begin
         imap.authenticate('XOAUTH2', email, access_token)
       rescue

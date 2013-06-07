@@ -97,7 +97,7 @@ module LpGmail
       session[:bergcloud_return_url] = params['return_url']
       session[:bergcloud_error_url] = params['error_url']
 
-      redirect gmail.oauth_authorize_url()
+      redirect gmail.oauth_authorize_url(redirect_uri: url('/return/'))
     end
 
 
@@ -113,7 +113,7 @@ module LpGmail
       end
 
       begin
-        access_token_obj = gmail.oauth_get_token(params[:code], url('/return/'))
+        access_token_obj = gmail.oauth_get_token(code: params[:code], redirect_uri: url('/return/'))
       rescue OAuth2::Error => error
         return error.code, "Error when trying to get an access token from Google (1a): #{error_description}"
       rescue => error
