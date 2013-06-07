@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'gmail_xoauth'
 require 'oauth2'
 
@@ -60,12 +61,13 @@ module LpGmail
       begin
         imap = new_imap_connection()
         imap.authenticate('XOAUTH2', email, access_token)
-      rescue
+      rescue => error
+        p error
         success = false
       end
 
-      if imap and !imap.disconnected?
-        imap.disconnect
+      if imap
+        imap.disconnect unless imap.disconnected?
       end
 
       return success 
