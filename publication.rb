@@ -65,7 +65,7 @@ helpers do
 
     time_since = Time.now - (86400 * 1)
     begin
-      data[:recent_count] = imap.search(['SINCE', time_since])
+      data[:recent_count] = imap.search(['SINCE', time_since]).length
     rescue => error
       halt 500, "Error counting recent in #{mailbox}: #{error}"
     end
