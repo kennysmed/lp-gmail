@@ -57,6 +57,9 @@ module LpGmail
     end
 
 
+    # Check whether an email and an oauth access_token will let us
+    # authenticate with Gmail over IMAP.
+    # Returns true or false.
     def test_imap_authentication(email, access_token)
       success = true
       imap = new_imap_connection()
