@@ -34,14 +34,14 @@ module LpGmail
     # Or, if something goes wrong, a string - an error message.
     def oauth_get_token(code, redirect_uri)
       begin
-        return auth_client.auth_code.get_token(code, {
+        auth_client.auth_code.get_token(code, {
                         :redirect_uri => redirect_uri,
                         :token_method => :post
                       })
       rescue OAuth2::Error => error
-        return error
+        error
       rescue => error
-        return error
+        error
       end
     end
 
@@ -52,14 +52,12 @@ module LpGmail
     # Or, if something goes wrong, a string - an error message.
     def oauth_get_token_from_hash(refresh_token)
       begin
-        access_token = OAuth2::AccessToken.from_hash(auth_client,
+        OAuth2::AccessToken.from_hash(auth_client,
                                     :refresh_token => refresh_token).refresh!
-        puts "ACCESS TOKEN: " + access_token
-        return access_token
       rescue OAuth2::Error => error
-        return error
+        error
       rescue => error
-        return error
+        error
       end
     end
 

@@ -205,6 +205,7 @@ module LpGmail
       if access_token_obj.instance_of? String
         return 500, "Error when trying to get an access token from Google (2): #{access_token_obj}"
       end
+      puts "ACCESS TOKEN: " + access_token_obj
 
       begin
         imap = new_imap_connection()
