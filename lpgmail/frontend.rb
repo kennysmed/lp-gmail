@@ -1,9 +1,8 @@
 # coding: utf-8
 require 'gmail_xoauth'
 require 'oauth2'
-require 'redis'
 require 'sinatra/base'
-require 'uuid'
+require 'lpgmail/store'
 
 
 module LpGmail
@@ -12,6 +11,8 @@ module LpGmail
     set :sessions, true
     set :public_folder, 'public'
     set :views, settings.root + '/../views'
+
+    user_store = LpGmail::Store::User.new
 
     auth_client = OAuth2::Client.new(
       ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], {
@@ -24,14 +25,6 @@ module LpGmail
       if settings.development?
         # So we can see what's going wrong on Heroku.
         set :show_exceptions, true
-      end
-
-      if settings.production?
-        raise 'REDISCLOUD_URL is not set' if !ENV['REDISCLOUD_URL']
-        uri = URI.parse(ENV['REDISCLOUD_URL'])
-        REDIS = Redis.new(:host => uri.host, :port => uri.port, :password => uri.password)
-      else
-        REDIS = Redis.new()
       end
     end
 
@@ -202,9 +195,7 @@ module LpGmail
         redirect url('/email/')
       else
         # All good.
-        id = UUID.generate
-        REDIS.set("user:#{id}:refresh_token", session[:refresh_token])
-        REDIS.set("user:#{id}:email", params[:email])
+        id = user_store.store(params[:email], session[:refresh_token])
         session[:access_token] = nil
         session[:refresh_token] = nil
         redirect "#{session[:bergcloud_return_url]}?config[id]=#{id}"
@@ -214,19 +205,18 @@ module LpGmail
 
     get '/edition/' do
       id = params[:id]
-      refresh_token = REDIS.get("user:#{id}:refresh_token")
-      email = REDIS.get("user:#{id}:email")
+      user = user_store.get(id)
 
       puts "EDITION AUTH"
-      puts "EMAIL: " + email
-      puts "TOKEN: " + refresh_token
-      if !refresh_token || !email
+      puts "EMAIL: " + user[:email]
+      puts "TOKEN: " + user[:refresh_token]
+      if !user
         return 500, "No refresh_token or email found for ID '#{id}'"
       end
 
       begin
         access_token_obj = OAuth2::AccessToken.from_hash(auth_client,
-                                          :refresh_token => refresh_token).refresh!
+                              :refresh_token => user[:refresh_token]).refresh!
       rescue OAuth2::Error => error
         return 500, "Error when trying to get an access token from Google (1): #{error}"
       rescue => error
@@ -235,13 +225,13 @@ module LpGmail
 
       begin
         imap = new_imap_connection()
-        imap.authenticate('XOAUTH2', email, access_token_obj.token)
+        imap.authenticate('XOAUTH2', user[:email], access_token_obj.token)
       rescue => error
         imap.disconnect unless imap.disconnected?
         return 500, "Error when trying to authenticate with Google IMAP: #{error}"
       end
 
-      @email_address = email
+      @email_address = user[:email]
       @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
                     :important => get_mailbox_data(imap, '[Gmail]/Important')}
 
