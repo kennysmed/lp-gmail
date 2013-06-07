@@ -97,7 +97,7 @@ module LpGmail
       session[:bergcloud_return_url] = params['return_url']
       session[:bergcloud_error_url] = params['error_url']
 
-      redirect gmail.oauth_authorize_url
+      redirect gmail.oauth_authorize_url()
     end
 
 

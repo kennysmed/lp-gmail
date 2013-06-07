@@ -58,11 +58,11 @@ module LpGmail
 
     def test_imap_authentication(email, access_token)
       success = true
+      imap = new_imap_connection()
+      
       begin
-        imap = new_imap_connection()
         imap.authenticate('XOAUTH2', email, access_token)
-      rescue => error
-        p error
+      rescue
         success = false
       end
 
