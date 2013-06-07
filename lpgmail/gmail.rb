@@ -16,6 +16,11 @@ module LpGmail
     end
 
 
+    def new_imap_connection()
+      Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
+    end
+
+
     # Provides the URL to which we send the user for them to authenticate
     # with Google, and approve access.
     def oauth_authorize_url()
@@ -50,6 +55,21 @@ module LpGmail
     end
 
 
+    def test_imap_authentication(email, access_token)
+      success = true
+      begin
+        imap = new_imap_connection()
+        imap.authenticate('XOAUTH2', email, access_token)
+      rescue
+        success = false
+      end
+
+      if imap and !imap.disconnected?
+        imap.disconnect
+      end
+
+      return success 
+    end
   end
 end
 

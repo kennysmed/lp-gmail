@@ -62,9 +62,6 @@ module LpGmail
       end
 
 
-      def new_imap_connection()
-        Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
-      end
 
 
       # Doesn't need to be super - just check it's probably an address -
@@ -118,9 +115,9 @@ module LpGmail
       begin
         access_token_obj = gmail.oauth_get_token(params[:code], url('/return/'))
       rescue OAuth2::Error => error
-        return 500, "Error when trying to get an access token from Google (1): #{error}"
+        return error.code, "Error when trying to get an access token from Google (1a): #{error_description}"
       rescue => error
-        return 500, "Error when trying to get an access token from Google (1): #{error}"
+        return 500, "Error when trying to get an access token from Google (1b): #{error}"
       end
 
       # Save this for now, as we'll save it in DB once we've finished.
@@ -161,15 +158,8 @@ module LpGmail
       elsif !email_is_valid(params[:email])
         error_msg = "This email address doesn't seem to be valid"
 
-      else
-        begin
-          imap = new_imap_connection()
-          imap.authenticate('XOAUTH2', params[:email], session[:access_token])
-        rescue
-          error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
-        end
-
-        imap.disconnect unless imap.disconnected?
+      elsif !gmail.test_imap_authentication(params[:email], session[:access_token])
+        error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
       end
 
       if error_msg
@@ -199,9 +189,9 @@ module LpGmail
       begin
         access_token_obj = gmail.oauth_get_token_from_hash(user[:refresh_token])
       rescue OAuth2::Error => error
-        return 500, "Error when trying to get an access token from Google (2): #{error}"
+        return error.code, "Error when trying to get an access token from Google (2a): #{error_description}"
       rescue => error
-        return 500, "Error when trying to get an access token from Google (2): #{error}"
+        return 500, "Error when trying to get an access token from Google (2b): #{error}"
       end
 
       begin
