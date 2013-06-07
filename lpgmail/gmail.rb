@@ -52,8 +52,10 @@ module LpGmail
     # Or, if something goes wrong, a string - an error message.
     def oauth_get_token_from_hash(refresh_token)
       begin
-        return OAuth2::AccessToken.from_hash(auth_client,
+        access_token = OAuth2::AccessToken.from_hash(auth_client,
                                     :refresh_token => refresh_token).refresh!
+        puts "ACCESS TOKEN: " + access_token
+        return access_token
       rescue OAuth2::Error => error
         return error
       rescue => error
