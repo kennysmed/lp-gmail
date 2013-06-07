@@ -163,9 +163,6 @@ module LpGmail
 
       else
         begin
-          puts "AUTH"
-          puts "EMAIL: "+params[:email]
-          puts "TOKEN: "+session[:access_token]
           imap = new_imap_connection()
           imap.authenticate('XOAUTH2', params[:email], session[:access_token])
         rescue
@@ -194,9 +191,6 @@ module LpGmail
       id = params[:id]
       user = user_store.get(id)
 
-      puts "EDITION AUTH"
-      puts "EMAIL: " + user[:email]
-      puts "TOKEN: " + user[:refresh_token]
       if !user
         return 500, "No refresh_token or email found for ID '#{id}'"
       end
