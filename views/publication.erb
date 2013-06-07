@@ -12,7 +12,7 @@
       padding: 0;
       margin: 0;
       font-family: Arial, sans-serif;
-      font-size: 16px;
+      font-size: 20px;
     }
   </style>
 
@@ -28,6 +28,7 @@
     <p>
       Unread: <%= mdata[:unseen_count] %><br />
       Starred: <%= mdata[:flagged_count] %><br />
+      Received in past 24 hours: <%= mdata[:recent_count] %><br />
       Total: <%= mdata[:all_count] %>
     </p>
 
