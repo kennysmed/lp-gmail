@@ -12,7 +12,7 @@ module LpGmail
         :token_url => '/o/oauth2/token'
       }
     )
-    
+
 
     # Provides the URL to which we send the user for them to authenticate
     # with Google, and approve access.
@@ -34,14 +34,14 @@ module LpGmail
     # Or, if something goes wrong, a string - an error message.
     def oauth_get_token(code, redirect_uri)
       begin
-        auth_client.auth_code.get_token(code, {
+        return auth_client.auth_code.get_token(code, {
                         :redirect_uri => redirect_uri,
                         :token_method => :post
                       })
       rescue OAuth2::Error => error
-        error
+        return error
       rescue => error
-        error
+        return error
       end
     end
 
@@ -52,12 +52,12 @@ module LpGmail
     # Or, if something goes wrong, a string - an error message.
     def oauth_get_token_from_hash(refresh_token)
       begin
-        OAuth2::AccessToken.from_hash(auth_client,
+        return OAuth2::AccessToken.from_hash(auth_client,
                                     :refresh_token => refresh_token).refresh!
       rescue OAuth2::Error => error
-        error
+        return error
       rescue => error
-        error
+        return error
       end
     end
 
