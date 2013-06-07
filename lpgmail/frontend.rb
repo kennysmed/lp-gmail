@@ -115,10 +115,12 @@ module LpGmail
         end
       end
 
-      access_token_obj = gmail.oauth_get_token(params[:code], url('/return/'))
-
-      if access_token_obj.instance_of? String
-        return 500, "Error when trying to get an access token from Google (1): #{access_token_obj}"
+      begin
+        access_token_obj = gmail.oauth_get_token(params[:code], url('/return/'))
+      rescue OAuth2::Error => error
+        return 500, "Error when trying to get an access token from Google (1): #{error}"
+      rescue => error
+        return 500, "Error when trying to get an access token from Google (1): #{error}"
       end
 
       # Save this for now, as we'll save it in DB once we've finished.
@@ -200,12 +202,13 @@ module LpGmail
       end
 
       # Get a new access_token using the refresh_token we stored.
-      access_token_obj = gmail.oauth_get_token_from_hash(user[:refresh_token])
-
-      if access_token_obj.instance_of? String
-        return 500, "Error when trying to get an access token from Google (2): #{access_token_obj}"
+      begin
+        access_token_obj = gmail.oauth_get_token_from_hash(user[:refresh_token])
+      rescue OAuth2::Error => error
+        return 500, "Error when trying to get an access token from Google (2): #{error}"
+      rescue => error
+        return 500, "Error when trying to get an access token from Google (2): #{error}"
       end
-      puts "ACCESS TOKEN: " + access_token_obj
 
       begin
         imap = new_imap_connection()

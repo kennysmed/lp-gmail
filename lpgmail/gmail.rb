@@ -31,34 +31,20 @@ module LpGmail
     # code: The code returned in the URL.
     # redirect_uri: The URI on this site that has been set as the Return URI.
     # Returns an access_token object with .token and .refresh_token attributes.
-    # Or, if something goes wrong, a string - an error message.
     def oauth_get_token(code, redirect_uri)
-      begin
-        auth_client.auth_code.get_token(code, {
+      auth_client.auth_code.get_token(code, {
                         :redirect_uri => redirect_uri,
                         :token_method => :post
                       })
-      rescue OAuth2::Error => error
-        error
-      rescue => error
-        error
-      end
     end
 
 
     # Get a new access_token using the refresh_token that was stored when
     # the user signed up.
     # Returns an access_token object with .token and .refresh_token attributes.
-    # Or, if something goes wrong, a string - an error message.
     def oauth_get_token_from_hash(refresh_token)
-      begin
-        OAuth2::AccessToken.from_hash(auth_client,
+      OAuth2::AccessToken.from_hash(auth_client,
                                     :refresh_token => refresh_token).refresh!
-      rescue OAuth2::Error => error
-        error
-      rescue => error
-        error
-      end
     end
 
 
