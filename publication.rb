@@ -43,22 +43,18 @@ helpers do
   def get_mailbox_data(imap, mailbox)
     data = {}
 
+    # We could also use 'RECENT', but Gmail's IMAP implementation
+    # doesn't support that.
+    # https://support.google.com/mail/answer/78761?hl=en
+    mailbox_status = imap.status(mailbox, ['MESSAGES', 'UNSEEN'])
+
+    data[:all_count] = mailbox_status['MESSAGES']
+    data[:unseen_count] = mailbox_status['UNSEEN']
+
     begin
       imap.examine(mailbox)
     rescue => error
       halt 500, "Error examining #{mailbox}: #{error}"
-    end
-
-    begin
-      data[:all_count] = imap.search(['ALL']).length
-    rescue => error
-      halt 500, "Error counting all in #{mailbox}: #{error}"
-    end
-
-    begin
-      data[:unseen_count] = imap.search(['UNSEEN']).length
-    rescue => error
-      halt 500, "Error counting unseen in #{mailbox}: #{error}"
     end
 
     begin
