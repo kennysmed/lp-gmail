@@ -1,7 +1,6 @@
 # coding: utf-8
-require 'gmail_xoauth'
-require 'oauth2'
 require 'sinatra/base'
+require 'lpgmail/gmail'
 require 'lpgmail/store'
 
 
@@ -12,14 +11,9 @@ module LpGmail
     set :public_folder, 'public'
     set :views, settings.root + '/../views'
 
+    gmail = LpGmail::Gmail.new
     user_store = LpGmail::Store::User.new
 
-    auth_client = OAuth2::Client.new(
-      ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], {
-        :site => 'https://accounts.google.com',
-        :authorize_url => '/o/oauth2/auth',
-        :token_url => '/o/oauth2/token'
-      })
 
     configure do
       if settings.development?
@@ -106,14 +100,7 @@ module LpGmail
       session[:bergcloud_return_url] = params['return_url']
       session[:bergcloud_error_url] = params['error_url']
 
-      begin
-        redirect auth_client.auth_code.authorize_url(
-          :scope => 'https://mail.google.com/',
-          :redirect_uri => url('/return/'),
-          :access_type => 'offline',
-          :approval_prompt => 'force'
-        )
-      end
+      redirect gmail.oauth_authorize_url
     end
 
 
@@ -128,15 +115,15 @@ module LpGmail
         end
       end
 
-      access_token_obj = auth_client.auth_code.get_token(params[:code], {
-                          :redirect_uri => url("/return/"),
-                          :token_method => :post
-                        })
+      access_token_obj = gmail.oauth_get_token(params[:code], url('/return/'))
 
-      # We'll want to save this in the database after we have the user's
-      # email address.
+      if access_token_obj.instance_of? String
+        return 500, "Error when trying to get an access token from Google (1): #{access_token_obj}"
+      end
+
+      # Save this for now, as we'll save it in DB once we've finished.
       session[:refresh_token] = access_token_obj.refresh_token
-      # We'll use this in the next stage to check their email address.
+      # We'll use this in the next stage when checking their email address.
       session[:access_token] = access_token_obj.token
 
       # Now ask for the email address.
@@ -144,10 +131,8 @@ module LpGmail
     end
 
 
-    # The user has authenticated with Google, now we also need their Gmail
-    # address.
-    # Or, they've filled out the form already, but there was a problem with their
-    # email address.
+    # The user has authenticated with Google, now we need their Gmail address.
+    # Or, they've filled out form already, but there was an error.
     get '/email/' do
       if session[:form_error]
         @form_error = session[:form_error]
@@ -214,13 +199,11 @@ module LpGmail
         return 500, "No refresh_token or email found for ID '#{id}'"
       end
 
-      begin
-        access_token_obj = OAuth2::AccessToken.from_hash(auth_client,
-                              :refresh_token => user[:refresh_token]).refresh!
-      rescue OAuth2::Error => error
-        return 500, "Error when trying to get an access token from Google (1): #{error}"
-      rescue => error
-        return 500, "Error when trying to get an access token from Google (2): #{error}"
+      # Get a new access_token using the refresh_token we stored.
+      access_token_obj = gmail.oauth_get_token_from_hash(user[:refresh_token])
+
+      if access_token_obj.instance_of? String
+        return 500, "Error when trying to get an access token from Google (2): #{access_token_obj}"
       end
 
       begin
