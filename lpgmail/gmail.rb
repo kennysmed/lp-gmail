@@ -22,7 +22,8 @@ module LpGmail
     # redirect_uri: The URI on this site that has been set as the Return URI.
     def authorize_url(redirect_uri)
       @client.auth_code.authorize_url(
-                :scope => 'https://mail.google.com/',
+                # The second scope lets us fetch the user's gmail address.
+                :scope => 'https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email',
                 :redirect_uri => redirect_uri,
                 :access_type => 'offline',
                 :approval_prompt => 'force'
@@ -109,6 +110,42 @@ module LpGmail
       disconnect()
 
       return success 
+    end
+
+
+    # Assuming the user is authenticated, get an array of all their mailboxes/
+    # labels.
+    # Returns an array of Net::IMAP::MailboxList objects.
+    # Some examples:
+    # #<struct Net::IMAP::MailboxList attr=[:Hasnochildren, :Flagged], delim="/", name="[Gmail]/Starred">
+    # #<struct Net::IMAP::MailboxList attr=[:Hasnochildren], delim="/", name="Housekeeping">
+    # #<struct Net::IMAP::MailboxList attr=[:Haschildren], delim="/", name="Parent">
+    # #<struct Net::IMAP::MailboxList attr=[:Noselect, :Haschildren], delim="/", name="Parent/Folder">
+    # #<struct Net::IMAP::MailboxList attr=[:Hasnochildren], delim="/", name="Parent/Folder/Mailbox">
+    def get_mailboxes()
+      mailboxes = []
+
+      begin
+        mblist = @client.list('', '*')
+      rescue
+        return mailboxes
+      end
+
+      # Most of the mailboxes are in the correct order, but we want to move
+      # these ones to the front because they're displayed first in Gmail.
+      # So we delete them from mblist and append to mailboxes.
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == 'INBOX' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Starred' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Important' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Sent Mail' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Drafts' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Spam' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Bin' } )
+
+      # Now put the rest of the mailboxes on the end.
+      mailboxes.concat mblist
+
+      return mailboxes
     end
   end
 end

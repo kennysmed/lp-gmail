@@ -112,6 +112,19 @@ module LpGmail
         return 500, "Error when trying to get an access token from Google (1b): #{error}"
       end
 
+
+      begin
+        user_data = access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo')
+      rescue OAuth2::Error => error
+        return error.code, "Error when fetching email address (a): #{error_description}"
+      rescue => error
+        return 500, "Error when fetching email address (b): #{error}"
+      end
+
+      puts "USER DATA"
+      puts user_data
+
+
       # Save this for now, as we'll save it in DB once we've finished.
       session[:refresh_token] = access_token_obj.refresh_token
       # We'll use this in the next stage when checking their email address.
@@ -125,7 +138,6 @@ module LpGmail
     # The user has authenticated with Google, now we need their Gmail address.
     # Or, they've filled out form already, but there was an error.
     get '/setup/email/' do
-
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
         session[:form_errors] = nil
@@ -182,7 +194,8 @@ module LpGmail
         @email = session[:email]
       end
 
-      # GET MAILBOX DATA FOR USER, TO PUT IN TEMPLATE
+      @mailboxes = gmail_imap.get_mailboxes()
+
 
       erb :setup_mailboxes, :layout => :layout_setup
     end
