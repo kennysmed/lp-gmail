@@ -105,103 +105,110 @@ module LpGmail
       end
 
       begin
-        access_token_obj = gmail_auth.get_token(params[:code], url('/return/'))
+        gmail_auth.get_token(params[:code], url('/return/'))
       rescue OAuth2::Error => error
         return error.code, "Error when trying to get an access token from Google (1a): #{error_description}"
       rescue => error
         return 500, "Error when trying to get an access token from Google (1b): #{error}"
       end
 
+      # Save this for now, as we'll save it in DB once we've finished.
+      session[:refresh_token] = gmail_auth.refresh_token
+      # We'll use this in the next stage when checking their email address.
+      session[:access_token] = gmail_auth.access_token
+
+      # Now choose the mailboxes.
+      redirect url('/setup/')
+    end
+
+
+    # # The user has authenticated with Google, now we need their Gmail address.
+    # # Or, they've filled out form already, but there was an error.
+    # get '/setup/email/' do
+    #   if session[:form_errors]
+    #     @form_errors = Marshal.load(session[:form_errors])
+    #     session[:form_errors] = nil
+    #   else
+    #     @form_errors = {}
+    #   end
+
+    #   if session[:email]
+    #     @email = session[:email]
+    #     session[:email] = nil
+    #   end
+
+    #   erb :setup_email, :layout => :layout_setup
+    # end
+
+
+    # # The user has submitted the email address form.
+    # post '/setup/email/' do
+    #   @form_errors = {}
+
+    #   # Check the presence and validity of the email address.
+    #   if !params[:email] || params[:email] == ''
+    #     @form_errors['email'] = "Please enter your Gmail address"
+
+    #   elsif !gmail_imap.email_is_valid?(params[:email])
+    #     @form_errors['email'] = "This email address doesn't seem to be valid"
+
+    #   elsif !gmail_imap.authentication_is_valid?(params[:email], session[:access_token])
+    #     @form_errors['email'] = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
+    #   end
+
+    #   if @form_errors.length > 0 
+    #     # Email address isn't right.
+    #     session[:form_errors] = Marshal.dump(@form_errors)
+    #     session[:email] = params[:email]
+    #     redirect url('/setup/email/')
+    #   else
+    #     # All good - on to selecting mailboxes.
+    #     session[:id] = user_store.store(params[:email], session[:refresh_token])
+    #     session[:email] = params[:email]
+    #     session[:form_errors] = nil
+    #     redirect('/setup/mailboxes/')
+    #   end
+    # end
+
+
+    get '/setup/' do
+      if session[:form_errors]
+        @form_errors = Marshal.load(session[:form_errors])
+        session[:form_errors] = nil
+      end
 
       begin
-        user_data_response = access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo')
+        gmail_auth.get_token_from_hash(session[:refresh_token])
       rescue OAuth2::Error => error
-        return error.code, "Error when fetching email address (a): #{error_description}"
+        return error.code, "Error when trying to get an access token from Google (2a): #{error_description}"
       rescue => error
-        return 500, "Error when fetching email address (b): #{error}"
+        return 500, "Error when trying to get an access token from Google (2b): #{error}"
       end
 
+      begin
+        gmail_auth.get_user_data()
+      rescue OAuth2::Error => error
+        return error.code, "Error when fetching email address (1a): #{error_description}"
+      rescue => error
+        return 500, "Error when fetching email address (1b): #{error}"
+      end
       puts "USER DATA"
-      puts user_data_response.parsed()
+      puts gmail_auth.user_data
 
-
-      # Save this for now, as we'll save it in DB once we've finished.
-      session[:refresh_token] = access_token_obj.refresh_token
-      # We'll use this in the next stage when checking their email address.
-      session[:access_token] = access_token_obj.token
-
-      # Now ask for the email address.
-      redirect url('/setup/email/')
-    end
-
-
-    # The user has authenticated with Google, now we need their Gmail address.
-    # Or, they've filled out form already, but there was an error.
-    get '/setup/email/' do
-      if session[:form_errors]
-        @form_errors = Marshal.load(session[:form_errors])
-        session[:form_errors] = nil
-      else
-        @form_errors = {}
+      begin
+        imap = gmail_imap.authenticate(gmail_auth.user_data['email'], gmail_auth.access_token)
+      rescue => error
+        return 500, "Error when trying to authenticate with Google IMAP: #{error}"
       end
 
-      if session[:email]
-        @email = session[:email]
-        session[:email] = nil
-      end
-
-      erb :setup_email, :layout => :layout_setup
-    end
-
-
-    # The user has submitted the email address form.
-    post '/setup/email/' do
-      @form_errors = {}
-
-      # Check the presence and validity of the email address.
-      if !params[:email] || params[:email] == ''
-        @form_errors['email'] = "Please enter your Gmail address"
-
-      elsif !gmail_imap.email_is_valid?(params[:email])
-        @form_errors['email'] = "This email address doesn't seem to be valid"
-
-      elsif !gmail_imap.authentication_is_valid?(params[:email], session[:access_token])
-        @form_errors['email'] = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
-      end
-
-      if @form_errors.length > 0 
-        # Email address isn't right.
-        session[:form_errors] = Marshal.dump(@form_errors)
-        session[:email] = params[:email]
-        redirect url('/setup/email/')
-      else
-        # All good - on to selecting mailboxes.
-        session[:id] = user_store.store(params[:email], session[:refresh_token])
-        session[:email] = params[:email]
-        session[:form_errors] = nil
-        redirect('/setup/mailboxes/')
-      end
-    end
-
-
-    get '/setup/mailboxes/' do
-      if session[:form_errors]
-        @form_errors = Marshal.load(session[:form_errors])
-        session[:form_errors] = nil
-      end
-
-      if session[:email]
-        @email = session[:email]
-      end
-
-      @mailboxes = gmail_imap.get_mailboxes()
-
+      @email = gmail_auth.user_data['email']
+      @mailboxes = gmail_imap.get_mailboxes
 
       erb :setup_mailboxes, :layout => :layout_setup
     end
 
 
-    post '/setup/mailboxes/' do
+    post '/setup/' do
       @form_errors = {}
 
       # VALIDATE MAILBOX FORM.
@@ -237,9 +244,9 @@ module LpGmail
       begin
         access_token_obj = gmail_auth.get_token_from_hash(user[:refresh_token])
       rescue OAuth2::Error => error
-        return error.code, "Error when trying to get an access token from Google (2a): #{error_description}"
+        return error.code, "Error when trying to get an access token from Google (3a): #{error_description}"
       rescue => error
-        return 500, "Error when trying to get an access token from Google (2b): #{error}"
+        return 500, "Error when trying to get an access token from Google (3b): #{error}"
       end
 
       begin

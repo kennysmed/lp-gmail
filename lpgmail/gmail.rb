@@ -6,6 +6,8 @@ require 'oauth2'
 module LpGmail
   class GmailAuth
 
+    attr_reader :user_data
+
     def initialize
       @client = OAuth2::Client.new(
         ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], {
@@ -14,6 +16,28 @@ module LpGmail
           :token_url => '/o/oauth2/token'
         }
       )
+
+      @access_token_obj = nil
+
+      @user_data = {}
+    end
+
+
+    def access_token()
+      if @access_token_obj
+        @access_token_obj.token
+      else
+        return nil
+      end
+    end
+
+
+    def refresh_token()
+      if @access_token_obj
+        @access_token_obj.refresh_token
+      else
+        return nil
+      end
     end
 
 
@@ -37,7 +61,7 @@ module LpGmail
     # redirect_uri: The URI on this site that has been set as the Return URI.
     # Returns an access_token object with .token and .refresh_token attributes.
     def get_token(code, redirect_uri)
-      @client.auth_code.get_token(code, {
+      @access_token_obj = @client.auth_code.get_token(code, {
                         :redirect_uri => redirect_uri,
                         :token_method => :post
                       })
@@ -48,8 +72,13 @@ module LpGmail
     # the user signed up.
     # Returns an access_token object with .token and .refresh_token attributes.
     def get_token_from_hash(refresh_token)
-      OAuth2::AccessToken.from_hash(@client,
+      @access_token_obj = OAuth2::AccessToken.from_hash(@client,
                                     :refresh_token => refresh_token).refresh!
+    end
+
+
+    def get_user_data()
+      @user_data = @access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo').parse
     end
   end
 
