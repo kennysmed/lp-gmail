@@ -138,28 +138,28 @@ module LpGmail
         session[:email] = nil
       end
 
-      erb :setup_email
+      erb :setup_email, :layout => :layout_setup
     end
 
 
     # The user has submitted the email address form.
     post '/setup/email/' do
-      form_errors = {}
+      @form_errors = {}
 
       # Check the presence and validity of the email address.
       if !params[:email] || params[:email] == ''
-        form_errors['email'] = "Please enter your Gmail address"
+        @form_errors['email'] = "Please enter your Gmail address"
 
-      elsif !gmail_imap.email_is_valid(params[:email])
-        form_errors['email'] = "This email address doesn't seem to be valid"
+      elsif !gmail_imap.email_is_valid?(params[:email])
+        @form_errors['email'] = "This email address doesn't seem to be valid"
 
       elsif !gmail_imap.authentication_is_valid?(params[:email], session[:access_token])
-        form_errors['email'] = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
+        @form_errors['email'] = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
       end
 
-      if form_errors.length > 0 
+      if @form_errors.length > 0 
         # Email address isn't right.
-        session[:form_errors] = Marshal.dump(form_errors)
+        session[:form_errors] = Marshal.dump(@form_errors)
         session[:email] = params[:email]
         redirect url('/setup/email/')
       else
@@ -184,18 +184,18 @@ module LpGmail
 
       # GET MAILBOX DATA FOR USER, TO PUT IN TEMPLATE
 
-      erb :setup_mailboxes
+      erb :setup_mailboxes, :layout => :layout_setup
     end
 
 
     post '/setup/mailboxes/' do
-      form_errors = {}
+      @form_errors = {}
 
       # VALIDATE MAILBOX FORM.
 
-      if form_errors.length > 0 
+      if @form_errors.length > 0 
         # Something's up. 
-        session[:form_errors] = Marshal.dump(form_errors)
+        session[:form_errors] = Marshal.dump(@form_errors)
         # STORE FORM SELECTIONS IN SESSION.
         redirect url('/setup/mailboxes/')
       else
