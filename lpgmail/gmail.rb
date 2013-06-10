@@ -4,12 +4,12 @@ require 'oauth2'
 
 
 module LpGmail
-  class GmailAuth
+  class Gmail
 
     attr_reader :user_data
 
     def initialize
-      @client = OAuth2::Client.new(
+      @auth_client = OAuth2::Client.new(
         ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], {
           :site => 'https://accounts.google.com',
           :authorize_url => '/o/oauth2/auth',
@@ -17,12 +17,19 @@ module LpGmail
         }
       )
 
+      # We don't set up the connection initially, as we don't necessarily need
+      # this on every request.
+      @imap_client = nil
+
       @access_token_obj = nil
 
       @user_data = {}
     end
 
 
+  public
+
+    # Get the OAuth2 access token string (required authentication).
     def access_token()
       if @access_token_obj
         @access_token_obj.token
@@ -32,6 +39,7 @@ module LpGmail
     end
 
 
+    # Get the OAuth2 refresh token string (required authentication).
     def refresh_token()
       if @access_token_obj
         @access_token_obj.refresh_token
@@ -55,12 +63,12 @@ module LpGmail
     end
 
 
-    # Provides an access_token object after the user has returned from
+    # Sets the access_token object after the user has returned from
     # authenticating with Google.
     # code: The code returned in the URL.
     # redirect_uri: The URI on this site that has been set as the Return URI.
-    # Returns an access_token object with .token and .refresh_token attributes.
-    def get_token(code, redirect_uri)
+    # Sets @access_token object with .token and .refresh_token attributes.
+    def fetch_token(code, redirect_uri)
       @access_token_obj = @client.auth_code.get_token(code, {
                         :redirect_uri => redirect_uri,
                         :token_method => :post
@@ -68,77 +76,61 @@ module LpGmail
     end
 
 
+    # If we have a refresh_token, this will:
+    #  * Do the OAuth2 authentication,
+    #  * Fetch the user's data (including email address),
+    #  * Authenticate with IMAP.
+    #
+    # Once done we can access gmail.user_data and call gmail.get_mailboxes().
+    # 
+    # You should probably check for at least OAuth2::Error and
+    # Net::IMAP::ResponseError
+    # 
+    def login(refresh_token)
+      fetch_token_from_hash(refresh_token)
+
+      fetch_user_data()
+
+      imap_authenticate()
+    end
+
+
+    def imap_disconnect()
+      if @imap_client
+        @imap_client.disconnect unless @imap_client.disconnected?
+      end
+    end
+
+
+  private
+
+
     # Get a new access_token using the refresh_token that was stored when
     # the user signed up.
-    # Returns an access_token object with .token and .refresh_token attributes.
-    def get_token_from_hash(refresh_token)
+    # Sets up @ccess_token_obj with .token and .refresh_token attributes.
+    def fetch_token_from_hash(refresh_token)
       @access_token_obj = OAuth2::AccessToken.from_hash(@client,
                                     :refresh_token => refresh_token).refresh!
     end
 
 
-    def get_user_data()
-      @user_data = @access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo').parsed
-    end
-  end
-
-
-  class GmailImap
-
-    # We don't set up the connection initially, as we don't necessarily need
-    # this on every request.
-    def initialize
-      @client = nil
+    def fetch_user_data()
+      @user_data = @access_token_obj.get(
+                        'https://www.googleapis.com/oauth2/v1/userinfo').parsed
     end
 
 
-    def connect()
-      @client = Net::IMAP.new('imap.gmail.com', 993, usessl=true, certs=nil, verify=false)
-    end
-
-
-    def disconnect()
-      if @client
-        @client.disconnect unless @client.disconnected?
-      end
+    def imap_connect()
+      @imap_client = Net::IMAP.new('imap.gmail.com', 993,
+                                          usessl=true, certs=nil, verify=false)
     end
 
 
     # Authenticate a user with IMAP.
-    # email is the user's email address.
-    # access_token is the OAuth access_token string.
-    def authenticate(email, access_token)
-      connect()
-      @client.authenticate('XOAUTH2', email, access_token)
-    end
-
-
-    # Doesn't need to be super - just check it's probably an address -
-    # because we can also use authentication_is_valid?
-    def email_is_valid?(email)
-      if email =~ /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
-        return true
-      else
-        return false
-      end
-    end
-
-
-    # Check whether an email and an oauth access_token will let us
-    # authenticate with Gmail over IMAP.
-    # Returns true or false.
-    def authentication_is_valid?(email, access_token)
-      success = true
-
-      begin
-        authenticate(email, access_token)
-      rescue
-        success = false
-      end
-
-      disconnect()
-
-      return success 
+    def imap_authenticate()
+      imap_connect()
+      @imap_client.authenticate('XOAUTH2', @user_data['email'],
+                                                      @access_token_obj.token)
     end
 
 
@@ -155,7 +147,7 @@ module LpGmail
       mailboxes = []
 
       begin
-        mblist = @client.list('', '*')
+        mblist = @imap_client.list('', '*')
       rescue
         return mailboxes
       end
@@ -176,6 +168,26 @@ module LpGmail
 
       return mailboxes
     end
+
+
+    # Check whether an email and an oauth access_token will let us
+    # authenticate with Gmail over IMAP.
+    # Returns true or false.
+    # def imap_authentication_is_valid?(email, access_token)
+    #   success = true
+
+    #   begin
+    #     imap_authenticate(email, access_token)
+    #   rescue
+    #     success = false
+    #   end
+
+    #   imap_disconnect()
+
+    #   return success 
+    # end
+
+
   end
 end
 

@@ -21,11 +21,11 @@ module LpGmail
     end
 
 
-    # Keeps track of email address and oauth refresh_token for each user.
+    # Keeps track of oauth refresh_tokens for each user.
     class User < RedisBase
-      def store(email, refresh_token)
+      def store(refresh_token)
         id = UUID.generate
-        redis.hset(:user, id, Marshal.dump([email, refresh_token]))
+        redis.hset(:user, id, Marshal.dump([refresh_token]))
         return id
       end
 
@@ -37,7 +37,6 @@ module LpGmail
         if data = redis.hget(:user, id)
           arr = Marshal.load(data)
           return {
-            :email => arr[0],
             :refresh_token => arr[1]
           }
         end

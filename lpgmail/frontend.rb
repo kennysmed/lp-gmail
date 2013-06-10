@@ -11,8 +11,7 @@ module LpGmail
     set :public_folder, 'public'
     set :views, settings.root + '/../views'
 
-    gmail_auth = LpGmail::GmailAuth.new
-    gmail_imap = LpGmail::GmailImap.new
+    gmail = LpGmail::Gmail.new
     user_store = LpGmail::Store::User.new
 
 
@@ -28,6 +27,18 @@ module LpGmail
 
 
     helpers do
+
+      def gmail_login(refresh_token)
+        begin
+          gmail.login(session[:refresh_token])
+        rescue OAuth2::Error => error
+          halt error.code, "Error when trying to log in: #{error_description}"
+        rescue Net::IMAP::ResponseError => error
+          halt 500, "Error when trying to log in: #{error}"
+        rescue => error
+          halt 500, "Error when trying to log in: #{error}"
+        end
+      end
 
       # Fetch data about an individual Gmail mailbox.
       # `mailbox` is the name of the mailbox, eg 'INBOX', '[Gmail]/Important'.
@@ -89,7 +100,7 @@ module LpGmail
       session[:bergcloud_return_url] = params['return_url']
       session[:bergcloud_error_url] = params['error_url']
 
-      redirect gmail_auth.authorize_url(url('/return/'))
+      redirect gmail.authorize_url(url('/return/'))
     end
 
 
@@ -105,7 +116,7 @@ module LpGmail
       end
 
       begin
-        gmail_auth.get_token(params[:code], url('/return/'))
+        gmail.fetch_token(params[:code], url('/return/'))
       rescue OAuth2::Error => error
         return error.code, "Error when trying to get an access token from Google (1a): #{error_description}"
       rescue => error
@@ -113,9 +124,11 @@ module LpGmail
       end
 
       # Save this for now, as we'll save it in DB once we've finished.
-      session[:refresh_token] = gmail_auth.refresh_token
+      session[:refresh_token] = gmail.refresh_token
       # We'll use this in the next stage when checking their email address.
-      session[:access_token] = gmail_auth.access_token
+      session[:access_token] = gmail.access_token
+
+      gmail.imap_disconnect
 
       # Now choose the mailboxes.
       redirect url('/setup/')
@@ -177,53 +190,37 @@ module LpGmail
         session[:form_errors] = nil
       end
 
-      begin
-        gmail_auth.get_token_from_hash(session[:refresh_token])
-      rescue OAuth2::Error => error
-        return error.code, "Error when trying to get an access token from Google (2a): #{error_description}"
-      rescue => error
-        return 500, "Error when trying to get an access token from Google (2b): #{error}"
-      end
+      gmail_login(session[:refresh_token])
 
-      begin
-        gmail_auth.get_user_data()
-      rescue OAuth2::Error => error
-        return error.code, "Error when fetching email address (1a): #{error_description}"
-      rescue => error
-        return 500, "Error when fetching email address (1b): #{error}"
-      end
-      puts "USER DATA"
-      puts gmail_auth.user_data
+      @email = gmail.user_data['email']
+      @mailboxes = gmail.get_mailboxes
 
-      begin
-        imap = gmail_imap.authenticate(gmail_auth.user_data['email'], gmail_auth.access_token)
-      rescue => error
-        return 500, "Error when trying to authenticate with Google IMAP: #{error}"
-      end
+      gmail.imap_disconnect
 
-      @email = gmail_auth.user_data['email']
-      @mailboxes = gmail_imap.get_mailboxes
-
-      erb :setup_mailboxes, :layout => :layout_setup
+      erb :setup
     end
 
 
     post '/setup/' do
       @form_errors = {}
 
+      gmail_login(session[:refresh_token])
+
+      mailboxes = gmail.get_mailboxes
+      
       # VALIDATE MAILBOX FORM.
+
+      gmail.imap_disconnect
 
       if @form_errors.length > 0 
         # Something's up. 
         session[:form_errors] = Marshal.dump(@form_errors)
         # STORE FORM SELECTIONS IN SESSION.
-        redirect url('/setup/mailboxes/')
+        redirect url('/setup/')
       else
         # All good.
         # STORE SELECTED MAILBOX INFO IN OUR REDIS STORE.
-        id = session[:id]
-        session[:id] = nil
-        session[:email] = nil
+        id = user_store.store(session[:refresh_token])
         session[:access_token] = nil
         session[:refresh_token] = nil
         session[:form_errors] = nil
@@ -237,29 +234,17 @@ module LpGmail
       user = user_store.get(id)
 
       if !user
-        return 500, "No refresh_token or email found for ID '#{id}'"
+        return 500, "No data found for ID '#{id}'"
       end
 
-      # Get a new access_token using the refresh_token we stored.
-      begin
-        access_token_obj = gmail_auth.get_token_from_hash(user[:refresh_token])
-      rescue OAuth2::Error => error
-        return error.code, "Error when trying to get an access token from Google (3a): #{error_description}"
-      rescue => error
-        return 500, "Error when trying to get an access token from Google (3b): #{error}"
-      end
+      gmail_login(user[:refresh_token])
 
-      begin
-        imap = gmail_imap.authenticate(user[:email], access_token_obj.token)
-      rescue => error
-        return 500, "Error when trying to authenticate with Google IMAP: #{error}"
-      end
+      @user_data = gmail.user_data
 
-      @email_address = user[:email]
       @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
                     :important => get_mailbox_data(imap, '[Gmail]/Important')}
 
-      gmail_imap.disconnect
+      gmail.imap_disconnect
 
       # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:
