@@ -11,7 +11,8 @@ module LpGmail
     set :public_folder, 'public'
     set :views, settings.root + '/../views'
 
-    gmail = LpGmail::Gmail.new
+    gmail_auth = LpGmail::GmailAuth.new
+    gmail_imap = LpGmail::GmailImap.new
     user_store = LpGmail::Store::User.new
 
 
@@ -20,6 +21,9 @@ module LpGmail
         # So we can see what's going wrong on Heroku.
         set :show_exceptions, true
       end
+
+      # How many mailboxes/labels do we let the user select?
+      set :max_mailboxes, 4
     end
 
 
@@ -62,18 +66,6 @@ module LpGmail
       end
 
 
-
-
-      # Doesn't need to be super - just check it's probably an address -
-      # because we then try to authenticate over IMAP too.
-      def email_is_valid(email)
-        if email =~ /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
-          return true
-        else
-          return false
-        end
-      end
-
       def format_title()
         "Gmail Little Printer Publication"
       end
@@ -97,7 +89,7 @@ module LpGmail
       session[:bergcloud_return_url] = params['return_url']
       session[:bergcloud_error_url] = params['error_url']
 
-      redirect gmail.oauth_authorize_url(url('/return/'))
+      redirect gmail_auth.authorize_url(url('/return/'))
     end
 
 
@@ -113,7 +105,7 @@ module LpGmail
       end
 
       begin
-        access_token_obj = gmail.oauth_get_token(params[:code], url('/return/'))
+        access_token_obj = gmail_auth.get_token(params[:code], url('/return/'))
       rescue OAuth2::Error => error
         return error.code, "Error when trying to get an access token from Google (1a): #{error_description}"
       rescue => error
@@ -126,16 +118,16 @@ module LpGmail
       session[:access_token] = access_token_obj.token
 
       # Now ask for the email address.
-      redirect url('/email/')
+      redirect url('/setup/email/')
     end
 
 
     # The user has authenticated with Google, now we need their Gmail address.
     # Or, they've filled out form already, but there was an error.
-    get '/email/' do
-      if session[:form_error]
-        @form_error = session[:form_error]
-        session[:form_error] = nil
+    get '/setup/email/' do
+      if session[:form_errors]
+        @form_errors = Marshal.load(session[:form_errors])
+        session[:form_errors] = nil
       end
 
       if session[:email]
@@ -143,35 +135,75 @@ module LpGmail
         session[:email] = nil
       end
 
-      erb :email
+      erb :setup_email
     end
 
 
     # The user has submitted the email address form.
-    post '/email/' do
-      error_msg = nil
+    post '/setup/email/' do
+      form_errors = {}
 
       # Check the presence and validity of the email address.
       if !params[:email] || params[:email] == ''
-        error_msg = "Please enter your Gmail address"
+        form_errors['email'] = "Please enter your Gmail address"
 
-      elsif !email_is_valid(params[:email])
-        error_msg = "This email address doesn't seem to be valid"
+      elsif !gmail_imap.email_is_valid(params[:email])
+        form_errors['email'] = "This email address doesn't seem to be valid"
 
-      elsif !gmail.test_imap_authentication(params[:email], session[:access_token])
-        error_msg = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
+      elsif !gmail_imap.authentication_is_valid?(params[:email], session[:access_token])
+        form_errors['email'] = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
       end
 
-      if error_msg
+      if form_errors.length > 0 
         # Email address isn't right.
-        session[:form_error] = error_msg
+        session[:form_errors] = Marshal.dump(form_errors)
         session[:email] = params[:email]
-        redirect url('/email/')
+        redirect url('/setup/email/')
+      else
+        # All good - on to selecting mailboxes.
+        session[:id] = user_store.store(params[:email], session[:refresh_token])
+        session[:email] = params[:email]
+        session[:form_errors] = nil
+        redirect('/setup/mailboxes/')
+      end
+    end
+
+
+    get '/setup/mailboxes/' do
+      if session[:form_errors]
+        @form_errors = Marshal.load(session[:form_errors])
+        session[:form_errors] = nil
+      end
+
+      if session[:email]
+        @email = session[:email]
+      end
+
+      # GET MAILBOX DATA FOR USER, TO PUT IN TEMPLATE
+
+      erb :setup_mailboxes
+    end
+
+
+    post '/setup/mailboxes/' do
+      form_errors = {}
+
+      # VALIDATE MAILBOX FORM.
+
+      if form_errors.length > 0 
+        # Something's up. 
+        session[:form_errors] = Marshal.dump(form_errors)
+        # STORE FORM SELECTIONS IN SESSION.
+        redirect url('/setup/mailboxes/')
       else
         # All good.
-        id = user_store.store(params[:email], session[:refresh_token])
+        # STORE SELECTED MAILBOX INFO IN OUR REDIS STORE.
+        id = session[:id]
+        session[:id] = nil
+        session[:email] = nil
         session[:access_token] = nil
         session[:refresh_token] = nil
+        session[:form_errors] = nil
         redirect "#{session[:bergcloud_return_url]}?config[id]=#{id}"
       end
     end
@@ -187,7 +219,7 @@ module LpGmail
 
       # Get a new access_token using the refresh_token we stored.
       begin
-        access_token_obj = gmail.oauth_get_token_from_hash(user[:refresh_token])
+        access_token_obj = gmail_auth.get_token_from_hash(user[:refresh_token])
       rescue OAuth2::Error => error
         return error.code, "Error when trying to get an access token from Google (2a): #{error_description}"
       rescue => error
@@ -195,10 +227,8 @@ module LpGmail
       end
 
       begin
-        imap = new_imap_connection()
-        imap.authenticate('XOAUTH2', user[:email], access_token_obj.token)
+        imap = gmail_imap.authenticate(user[:email], access_token_obj.token)
       rescue => error
-        imap.disconnect unless imap.disconnected?
         return 500, "Error when trying to authenticate with Google IMAP: #{error}"
       end
 
@@ -206,7 +236,7 @@ module LpGmail
       @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
                     :important => get_mailbox_data(imap, '[Gmail]/Important')}
 
-      imap.disconnect unless imap.disconnected?
+      gmail_imap.disconnect
 
       # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:

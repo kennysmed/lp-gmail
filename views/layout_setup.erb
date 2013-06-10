@@ -68,22 +68,8 @@
   <div class="config">
     <h1 class="config-title"><%= format_title %></title></h1>
 
-    <form method="post" action="<%= url("/email/") %>">
-      
-      <p class="config-intro">Thanks for authenticating with Google. To complete your subscription please enter your Gmail address.</p>
+    <%= yield %>
 
-      <% if @form_error %>
-        <p class="config-error"><%= @form_error %></p>
-      <% end %>
-
-      <p><label for="email" class="label">Gmail address:</label><span class="input"><input type="email" id="email" class="config-email" name="email" value="<%= @email %>" /></span></p>
-
-      <p>
-        <span class="label">&nbsp;</span><span class="input"><input type="submit" value="Submit" class="config-submit-button" /></span>
-      </p>
-
-      <p class="config-note">We promise not to send you email or pass it on.</p>
-    </form>
   </div> <!-- .config -->
 
 </body>

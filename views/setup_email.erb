@@ -1,0 +1,16 @@
+    <form method="post" action="<%= url("/setup/email/") %>">
+      
+      <p class="config-intro">Thanks for authenticating with Google. To complete your subscription please enter your Gmail address.</p>
+
+      <% if @form_errors.has_key?('email') %>
+        <p class="config-error"><%= @form_errors['email'] %></p>
+      <% end %>
+
+      <p><label for="email" class="label">Gmail address:</label><span class="input"><input type="email" id="email" class="config-email" name="email" value="<%= @email %>" /></span></p>
+
+      <p>
+        <span class="label">&nbsp;</span><span class="input"><input type="submit" value="Submit" class="config-submit-button" /></span>
+      </p>
+
+      <p class="config-note">We promise not to send you email or pass it on.</p>
+    </form>
