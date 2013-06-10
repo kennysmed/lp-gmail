@@ -53,7 +53,7 @@ module LpGmail
     # with Google, and approve access.
     # redirect_uri: The URI on this site that has been set as the Return URI.
     def authorize_url(redirect_uri)
-      @client.auth_code.authorize_url(
+      @auth_client.auth_code.authorize_url(
                 # The second scope lets us fetch the user's gmail address.
                 :scope => 'https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email',
                 :redirect_uri => redirect_uri,
@@ -69,7 +69,7 @@ module LpGmail
     # redirect_uri: The URI on this site that has been set as the Return URI.
     # Sets @access_token object with .token and .refresh_token attributes.
     def fetch_token(code, redirect_uri)
-      @access_token_obj = @client.auth_code.get_token(code, {
+      @access_token_obj = @auth_client.auth_code.get_token(code, {
                         :redirect_uri => redirect_uri,
                         :token_method => :post
                       })
@@ -109,7 +109,7 @@ module LpGmail
     # the user signed up.
     # Sets up @ccess_token_obj with .token and .refresh_token attributes.
     def fetch_token_from_hash(refresh_token)
-      @access_token_obj = OAuth2::AccessToken.from_hash(@client,
+      @access_token_obj = OAuth2::AccessToken.from_hash(@auth_client,
                                     :refresh_token => refresh_token).refresh!
     end
 
