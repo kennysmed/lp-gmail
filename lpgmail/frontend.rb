@@ -138,6 +138,8 @@ module LpGmail
     end
 
 
+    # User has authenticated, and now they can choose which mailboxes to see.
+    # Or, they've already submitted the mailbox form, and there were errors.
     get '/setup/' do
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
@@ -156,6 +158,9 @@ module LpGmail
     end
 
 
+    # User has submitted the form choosing their mailboxes.
+    # We either save data and return to BERG Cloud, or redirect to the GET
+    # version of this page with errors.
     post '/setup/' do
       @form_errors = {}
 
