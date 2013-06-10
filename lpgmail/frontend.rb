@@ -125,9 +125,12 @@ module LpGmail
     # The user has authenticated with Google, now we need their Gmail address.
     # Or, they've filled out form already, but there was an error.
     get '/setup/email/' do
+
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
         session[:form_errors] = nil
+      else
+        @form_errors = {}
       end
 
       if session[:email]
