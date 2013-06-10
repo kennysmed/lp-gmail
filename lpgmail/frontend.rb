@@ -16,7 +16,6 @@ module LpGmail
       @user_store = LpGmail::Store::User.new
     end
 
-
     configure do
       if settings.development?
         # So we can see what's going wrong on Heroku.
@@ -30,6 +29,8 @@ module LpGmail
 
     helpers do
 
+      # Does the OAuth and IMAP authentication, after which @gmail can do
+      # things like fetch mailbox data.
       def gmail_login(refresh_token)
         begin
           @gmail.login(refresh_token)
@@ -137,61 +138,13 @@ module LpGmail
     end
 
 
-    # # The user has authenticated with Google, now we need their Gmail address.
-    # # Or, they've filled out form already, but there was an error.
-    # get '/setup/email/' do
-    #   if session[:form_errors]
-    #     @form_errors = Marshal.load(session[:form_errors])
-    #     session[:form_errors] = nil
-    #   else
-    #     @form_errors = {}
-    #   end
-
-    #   if session[:email]
-    #     @email = session[:email]
-    #     session[:email] = nil
-    #   end
-
-    #   erb :setup_email, :layout => :layout_setup
-    # end
-
-
-    # # The user has submitted the email address form.
-    # post '/setup/email/' do
-    #   @form_errors = {}
-
-    #   # Check the presence and validity of the email address.
-    #   if !params[:email] || params[:email] == ''
-    #     @form_errors['email'] = "Please enter your Gmail address"
-
-    #   elsif !gmail_imap.email_is_valid?(params[:email])
-    #     @form_errors['email'] = "This email address doesn't seem to be valid"
-
-    #   elsif !gmail_imap.authentication_is_valid?(params[:email], session[:access_token])
-    #     @form_errors['email'] = "We couldn't verify your address with Gmail.<br />Is this the same Gmail address as the Google account you authenticated with?"
-    #   end
-
-    #   if @form_errors.length > 0 
-    #     # Email address isn't right.
-    #     session[:form_errors] = Marshal.dump(@form_errors)
-    #     session[:email] = params[:email]
-    #     redirect url('/setup/email/')
-    #   else
-    #     # All good - on to selecting mailboxes.
-    #     session[:id] = user_store.store(params[:email], session[:refresh_token])
-    #     session[:email] = params[:email]
-    #     session[:form_errors] = nil
-    #     redirect('/setup/mailboxes/')
-    #   end
-    # end
-
-
     get '/setup/' do
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
         session[:form_errors] = nil
       end
 
+      # Sets up @gmail.
       gmail_login(session[:refresh_token])
 
       @email = @gmail.user_data['email']

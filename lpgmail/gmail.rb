@@ -102,38 +102,6 @@ module LpGmail
     end
 
 
-  private
-
-
-    # Get a new access_token using the refresh_token that was stored when
-    # the user signed up.
-    # Sets up @ccess_token_obj with .token and .refresh_token attributes.
-    def fetch_token_from_hash(refresh_token)
-      @access_token_obj = OAuth2::AccessToken.from_hash(@auth_client,
-                                    :refresh_token => refresh_token).refresh!
-    end
-
-
-    def fetch_user_data()
-      @user_data = @access_token_obj.get(
-                        'https://www.googleapis.com/oauth2/v1/userinfo').parsed
-    end
-
-
-    def imap_connect()
-      @imap_client = Net::IMAP.new('imap.gmail.com', 993,
-                                          usessl=true, certs=nil, verify=false)
-    end
-
-
-    # Authenticate a user with IMAP.
-    def imap_authenticate()
-      imap_connect()
-      @imap_client.authenticate('XOAUTH2', @user_data['email'],
-                                                      @access_token_obj.token)
-    end
-
-
     # Assuming the user is authenticated, get an array of all their mailboxes/
     # labels.
     # Returns an array of Net::IMAP::MailboxList objects.
@@ -167,6 +135,38 @@ module LpGmail
       mailboxes.concat mblist
 
       return mailboxes
+    end
+
+
+  private
+
+
+    # Get a new access_token using the refresh_token that was stored when
+    # the user signed up.
+    # Sets up @ccess_token_obj with .token and .refresh_token attributes.
+    def fetch_token_from_hash(refresh_token)
+      @access_token_obj = OAuth2::AccessToken.from_hash(@auth_client,
+                                    :refresh_token => refresh_token).refresh!
+    end
+
+
+    def fetch_user_data()
+      @user_data = @access_token_obj.get(
+                        'https://www.googleapis.com/oauth2/v1/userinfo').parsed
+    end
+
+
+    def imap_connect()
+      @imap_client = Net::IMAP.new('imap.gmail.com', 993,
+                                          usessl=true, certs=nil, verify=false)
+    end
+
+
+    # Authenticate a user with IMAP.
+    def imap_authenticate()
+      imap_connect()
+      @imap_client.authenticate('XOAUTH2', @user_data['email'],
+                                                      @access_token_obj.token)
     end
 
 
