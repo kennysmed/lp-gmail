@@ -78,7 +78,7 @@ module LpGmail
 
 
     def get_user_data()
-      @user_data = @access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo').parse
+      @user_data = @access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo').parsed
     end
   end
 
