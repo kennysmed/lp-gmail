@@ -114,7 +114,7 @@ module LpGmail
 
 
       begin
-        user_data = access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo')
+        user_data_response = access_token_obj.get('https://www.googleapis.com/oauth2/v1/userinfo')
       rescue OAuth2::Error => error
         return error.code, "Error when fetching email address (a): #{error_description}"
       rescue => error
@@ -122,7 +122,7 @@ module LpGmail
       end
 
       puts "USER DATA"
-      puts user_data
+      puts user_data_response.parsed()
 
 
       # Save this for now, as we'll save it in DB once we've finished.
