@@ -30,7 +30,7 @@ module LpGmail
 
       def gmail_login(refresh_token)
         begin
-          gmail.login(refresh_token)
+          settings.gmail.login(refresh_token)
         rescue OAuth2::Error => error
           halt error.code, "Error when trying to log in: #{error_description}"
         rescue Net::IMAP::ResponseError => error
