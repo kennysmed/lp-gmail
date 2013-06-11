@@ -10,7 +10,13 @@
       margin: 10px;
       font-size: 16px;
     }
-    p {
+    ul, li {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+    }
+    p,
+    .config-mailbox {
     	margin: 0 0 1em 0;
     	line-height: 21px;
     }
@@ -33,9 +39,16 @@
     .config-error {
       color: #900;
     }
-    .config-mailbox-options {
-      display: none;
+    .config-mailbox {
+      margin-bottom: 1em;
     }
+      select {
+        font-size: 1em;
+      }
+      .config-mailbox-options {
+        display: none;
+        margin-bottom: 0;
+      }
     .config-submit-button {
       background: #FED84D;
       border: 1px solid #EEC83D;
@@ -68,27 +81,28 @@
 
 		  <p>For each one you can choose a different statistic to monitor. You can choose the same mailbox or label multiple times, but with different statistics.</p>
 
-      <% for m in 1..settings.max_mailboxes %>
-        <p class="config-mailbox">
-          <select name="mailbox-<%= m %>" data-options-element="config-mailbox-options-<%= m %>">
-            <option value="">Select a mailbox…</option>
-            <% @mailboxes.each do |mb| %>
-              <% unless mb.attr.include?(:Noselect) %>
-                <option value="<%= mb.name %>"><%= mb.name %></option>
-              <% end %>
-            <% end %> 
-          </select>
-          <span class="config-mailbox-options" id="config-mailbox-options-<%= m %>">
-            <br />
-            <input type="radio" name="metric-<%= m %>" value="total" id="metric-<%= m %>-total">
-            <label for="metric-<%= m %>-total">Total messages</label>
-            <input type="radio" name="metric-<%= m %>" value="unread" id="metric-<%= m %>-unread">
-            <label for="metric-<%= m %>-unread">Unread message count</label>
-            <input type="radio" name="metric-<%= m %>" value="daily" id="metric-<%= m %>-daily">
-            <label for="metric-<%= m %>-daily">Received per day</label>
-          </span>
-        </p>
-      <% end %>
+      <ul class="config-mailboxes">
+        <% for m in 1..settings.max_mailboxes %>
+          <li class="config-mailbox">
+            <select name="mailbox-<%= m %>" data-options-element="config-mailbox-options-<%= m %>">
+              <option value="">Select a mailbox…</option>
+              <% @mailboxes.each do |mb| %>
+                <% unless mb.attr.include?(:Noselect) %>
+                  <option value="<%= mb.name %>"><%= mb.name %></option>
+                <% end %>
+              <% end %> 
+            </select>
+            <p class="config-mailbox-options" id="config-mailbox-options-<%= m %>">
+              <input type="radio" name="metric-<%= m %>" value="total" id="metric-<%= m %>-total">
+              <label for="metric-<%= m %>-total">Total messages</label>
+              <input type="radio" name="metric-<%= m %>" value="unread" id="metric-<%= m %>-unread">
+              <label for="metric-<%= m %>-unread">Unread message count</label>
+              <input type="radio" name="metric-<%= m %>" value="daily" id="metric-<%= m %>-daily">
+              <label for="metric-<%= m %>-daily">Received per day</label>
+            </p>
+          </li>
+        <% end %>
+      </ul>
 
 		  <p>
 		    <input type="submit" value="Submit" class="config-submit-button" />
