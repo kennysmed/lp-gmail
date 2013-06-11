@@ -95,7 +95,7 @@
             <p class="config-mailbox-metrics" id="config-mailbox-metrics-<%= m %>">
               <% settings.valid_mailbox_metrics.each_pair do |key, label| %>
                 <span class="config-mailbox-metric">
-                  <input type="radio" name="metric-<%= m %>" value="<%= key %>" id="metric-<%= m %>-<%= key %>"<% if @form_values['metric-'+m] == key %> checked="checked"<% end %>>
+                  <input type="radio" name="metric-<%= m %>" value="<%= key %>" id="metric-<%= m %>-<%= key %>"<% if @form_values["metric-#{m}"] == key %> checked="checked"<% end %>>
                   <label for="metric-<%= m %>-<%= key %>"><%= label %></label>
                 </span>
               <% end %>
