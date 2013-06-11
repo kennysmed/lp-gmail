@@ -165,13 +165,13 @@ module LpGmail
       gmail.imap_disconnect
 
       # Now choose the mailboxes.
-      redirect url('/setup/')
+      redirect url('/mailboxes/')
     end
 
 
     # User has authenticated, and now they can choose which mailboxes to see.
     # Or, they've already submitted the mailbox form, and there were errors.
-    get '/setup/' do
+    get '/mailboxes/' do
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
         session[:form_errors] = nil
@@ -185,16 +185,14 @@ module LpGmail
 
       gmail.imap_disconnect
 
-      content_type 'text/html', :charset => 'utf-8'
-      "<h1>Hello there!</h1>"
-      # erb :setup
+      erb :mailboxes
     end
 
 
     # User has submitted the form choosing their mailboxes.
     # We either save data and return to BERG Cloud, or redirect to the GET
     # version of this page with errors.
-    post '/setup/' do
+    post '/mailboxes/' do
       @form_errors = {}
 
       gmail_login(session[:refresh_token])
@@ -209,7 +207,7 @@ module LpGmail
         # Something's up. 
         session[:form_errors] = Marshal.dump(@form_errors)
         # STORE FORM SELECTIONS IN SESSION.
-        redirect url('/setup/')
+        redirect url('/mailboxes/')
       else
         # All good.
         # STORE SELECTED MAILBOX INFO IN OUR REDIS STORE.
