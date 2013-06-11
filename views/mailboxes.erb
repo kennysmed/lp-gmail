@@ -24,7 +24,7 @@
       border: 1px solid #E8E6E3;
       background: #fff;
       padding: 1em 20px;
-      max-width: 420px;
+      max-width: 416px;
       margin: 0 auto;
     }
     .config-title {
@@ -47,8 +47,12 @@
       }
       .config-mailbox-options {
         display: none;
+        margin-top: 0.3em;
         margin-bottom: 0;
       }
+        .config-mailbox-option {
+          white-space: nowrap;
+        }
     .config-submit-button {
       background: #FED84D;
       border: 1px solid #EEC83D;
@@ -63,10 +67,6 @@
       background: #FCCA2E;
       cursor: pointer;
     }
-    .config-note {
-      margin-top: 2em;
-      color: #BBB;
-    }
   </style>
 
 </head>
@@ -79,7 +79,7 @@
 		  
 		  <p class="config-intro">You can choose up to <%= settings.max_mailboxes %> Gmail mailboxes/labels to appear on your Little Printer publication.</p>
 
-		  <p>For each one you can choose a different statistic to monitor. You can choose the same mailbox or label multiple times, but with different statistics.</p>
+		  <p>For each one, pick a different statistic to monitor. You can choose the same mailbox multiple times, but with different statistics.</p>
 
       <ul class="config-mailboxes">
         <% for m in 1..settings.max_mailboxes %>
@@ -93,18 +93,24 @@
               <% end %> 
             </select>
             <p class="config-mailbox-options" id="config-mailbox-options-<%= m %>">
-              <input type="radio" name="metric-<%= m %>" value="total" id="metric-<%= m %>-total">
-              <label for="metric-<%= m %>-total">Total messages</label>
-              <input type="radio" name="metric-<%= m %>" value="unread" id="metric-<%= m %>-unread">
-              <label for="metric-<%= m %>-unread">Unread message count</label>
-              <input type="radio" name="metric-<%= m %>" value="daily" id="metric-<%= m %>-daily">
-              <label for="metric-<%= m %>-daily">Received per day</label>
+              <span class="config-mailbox-option">
+                <input type="radio" name="metric-<%= m %>" value="total" id="metric-<%= m %>-total">
+                <label for="metric-<%= m %>-total">Total</label>
+              </span>
+              <span class="config-mailbox-option">
+                <input type="radio" name="metric-<%= m %>" value="unread" id="metric-<%= m %>-unread">
+                <label for="metric-<%= m %>-unread">Unread</label>
+              </span>
+              <span class="config-mailbox-option">
+                <input type="radio" name="metric-<%= m %>" value="daily" id="metric-<%= m %>-daily">
+                <label for="metric-<%= m %>-daily">Received per day</label>
+              </span>
             </p>
           </li>
         <% end %>
       </ul>
 
-		  <p>
+		  <p class="config-submit">
 		    <input type="submit" value="Submit" class="config-submit-button" />
 		  </p>
 		</form>
