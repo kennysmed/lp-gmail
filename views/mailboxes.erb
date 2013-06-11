@@ -84,7 +84,9 @@
         <p>
           <select name="mailbox-<%= m %>">
             <% @mailboxes.each do |mb| %>
-              <option value="<%= mb.name %>"><%= mb.name %></option>
+              <% unless mb.attr.include?(:Noselect) %>
+                <option value="<%= mb.name %>"><%= mb.name %></option>
+              <% end %>
             <% end %> 
           </select>
         </p>

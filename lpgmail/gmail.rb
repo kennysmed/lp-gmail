@@ -169,6 +169,7 @@ module LpGmail
       mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Important' } )
       mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Sent Mail' } )
       mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Drafts' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/All Mail' } )
       mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Spam' } )
       mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Bin' } )
 
