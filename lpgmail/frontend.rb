@@ -185,7 +185,9 @@ module LpGmail
 
       gmail.imap_disconnect
 
-      erb :setup
+      content_type 'text/html', :charset => 'utf-8'
+      "<h1>Hello there!</h1>"
+      # erb :setup
     end
 
 

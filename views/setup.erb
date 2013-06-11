@@ -1,1 +1,93 @@
-Hello
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= format_title %></title>
+  <style type="text/css">
+    body {
+      background: #F8F6F3;
+      color: #000;
+      font-family: Helvetica, Arial, sans-serif;
+      margin: 10px;
+      font-size: 16px;
+    }
+    p {
+    	margin: 0 0 1em 0;
+    	line-height: 21px;
+    }
+    .config {
+      border: 1px solid #E8E6E3;
+      background: #fff;
+      padding: 1em 20px;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+    .config-title {
+      margin: 0 0 0.5em 0;
+      font-size: 1.5em;
+    }
+    .config-intro {
+      font-weight: bold;
+      margin: 1em 0;
+      line-height: 1.3em;
+    }
+    .config-error {
+      color: #900;
+    }
+    .label {
+      display: inline-block;
+      width: 120px;
+    }
+    .input {
+      display: inline-block;
+      width: 300px;
+    }
+    .config-email {
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      width: 290px;
+    }
+    .config-submit {
+      text-align: right;
+    }
+    .config-submit-button {
+      background: #FED84D;
+      border: 1px solid #EEC83D;
+      color: #000;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 1em;
+      font-weight: bold;
+      padding: 0.5em 10px;
+      margin-right: 15px;
+    }
+    .config-submit-button:hover {
+      background: #FCCA2E;
+      cursor: pointer;
+    }
+    .config-note {
+      margin-top: 2em;
+      color: #BBB;
+    }
+  </style>
+</head>
+<body>
+  <div class="config">
+    <h1 class="config-title"><%= format_title %></title></h1>
+
+
+		<form method="post" action="<%= url("/setup/") %>">
+		  
+		  <p class="config-intro">You can choose up to <%= settings.max_mailboxes %> Gmail mailboxes/labels to appear on your Little Printer publication.</p>
+
+		  <p>For each one you can choose a different statistic to monitor. You can choose the same mailbox or label multiple times, but with different statistics.</p>
+
+
+		  <p>
+		    <span class="label">&nbsp;</span><span class="input"><input type="submit" value="Submit" class="config-submit-button" /></span>
+		  </p>
+		</form>
+
+
+  </div> <!-- .config -->
+
+</body>
+</html>
