@@ -183,6 +183,8 @@ require 'lpgmail/store'
     # form_errors will have the error messages
     # form_values will have form values we need to display again.
     get '/mailboxes/' do
+      @form_errors = {}
+      @form_values = {}
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
         session[:form_errors] = nil
@@ -207,6 +209,7 @@ require 'lpgmail/store'
     # version of this page with errors.
     post '/mailboxes/' do
       @form_errors = {}
+      @form_values = {}
 
       gmail_login(session[:refresh_token])
 
