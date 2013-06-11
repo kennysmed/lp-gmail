@@ -13,6 +13,24 @@ module LpGmail
 
 
     def initialize
+      # Will be set up in configure:
+      @gmail = nil
+      @user_store = nil 
+    end
+    
+
+    configure do
+
+      # How many mailboxes/labels do we let the user select?
+      set :max_mailboxes, 4
+
+      if settings.development?
+        # So we can see what's going wrong on Heroku.
+        set :show_exceptions, true
+      end
+
+      # Environment variables/config:
+
       set :redis_url, nil
 
       if ENV['GOOGLE_CLIENT_ID'] != nil
@@ -30,16 +48,6 @@ module LpGmail
       @gmail = LpGmail::Gmail.new(settings.google_client_id,
                                                 settings.google_client_secret)
       @user_store = LpGmail::Store::User.new(settings.redis_url)
-    end
-
-    configure do
-      if settings.development?
-        # So we can see what's going wrong on Heroku.
-        set :show_exceptions, true
-      end
-
-      # How many mailboxes/labels do we let the user select?
-      set :max_mailboxes, 4
     end
 
 
