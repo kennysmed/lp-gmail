@@ -45,12 +45,12 @@
       select {
         font-size: 1em;
       }
-      .config-mailbox-options {
+      .config-mailbox-metrics {
         display: none;
         margin-top: 0.3em;
         margin-bottom: 0;
       }
-        .config-mailbox-option {
+        .config-mailbox-metric {
           white-space: nowrap;
         }
     .config-submit-button {
@@ -84,27 +84,21 @@
       <ul class="config-mailboxes">
         <% for m in 1..settings.max_mailboxes %>
           <li class="config-mailbox">
-            <select name="mailbox-<%= m %>" data-options-element="config-mailbox-options-<%= m %>">
+            <select name="mailbox-<%= m %>" data-options-element="config-mailbox-metrics-<%= m %>">
               <option value="">Select a mailbox…</option>
               <% @mailboxes.each do |mb| %>
                 <% unless mb.attr.include?(:Noselect) %>
-                  <option value="<%= mb.name %>"><%= mb.name %></option>
+                  <option value="<%= mb.name %>"<% if @form_values['mailbox-'+m] && @form_values['mailbox-'+m] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
                 <% end %>
               <% end %> 
             </select>
-            <p class="config-mailbox-options" id="config-mailbox-options-<%= m %>">
-              <span class="config-mailbox-option">
-                <input type="radio" name="metric-<%= m %>" value="total" id="metric-<%= m %>-total">
-                <label for="metric-<%= m %>-total">Total</label>
-              </span>
-              <span class="config-mailbox-option">
-                <input type="radio" name="metric-<%= m %>" value="unread" id="metric-<%= m %>-unread">
-                <label for="metric-<%= m %>-unread">Unread</label>
-              </span>
-              <span class="config-mailbox-option">
-                <input type="radio" name="metric-<%= m %>" value="daily" id="metric-<%= m %>-daily">
-                <label for="metric-<%= m %>-daily">Received per day</label>
-              </span>
+            <p class="config-mailbox-metrics" id="config-mailbox-metrics-<%= m %>">
+              <% settings.valid_mailbox_metrics.each_pair do |key, label| %>
+                <span class="config-mailbox-metric">
+                  <input type="radio" name="metric-<%= m %>" value="<%= key %>" id="metric-<%= m %>-<%= key %>"<% if @form_values['metric-'+m] == key %> checked="checked"<% end %>>
+                  <label for="metric-<%= m %>-<%= key %>"><%= label %></label>
+                </span>
+              <% end %>
             </p>
           </li>
         <% end %>
@@ -124,21 +118,21 @@
 
       // $select is a <select> element.
       var set_radios = function($select) {
-        var $radios = $('#' + $select.data('options-element'));
+        var $radios = $('#' + $select.data('metric-element'));
 
         if ($select.val() == '') {
-          $radios.slideUp(); // Hide the options.
+          $radios.slideUp(); // Hide the metrics.
         } else {
           $radios.slideDown(); // Show the optinos.
         };
       };
 
-      // Hide the correct mailbox options on page load.
+      // Hide the correct mailbox metrics on page load.
       $('.config-mailbox select').each(function(){
         set_radios($(this));
       });
 
-      // When the user chooses (or not) a mailbox, show the options.
+      // When the user chooses (or not) a mailbox, show the metrics.
       $('.config-mailbox select').change(function(){
         set_radios($(this));
       });

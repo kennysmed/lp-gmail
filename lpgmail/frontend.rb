@@ -37,6 +37,14 @@ require 'lpgmail/store'
       # How many mailboxes/labels do we let the user select?
       set :max_mailboxes, 4
 
+      # The default metrics the user can choose in the form for each mailbox.
+      # Mapping the form value => Readable label.
+      valid_mailbox_metrics = {
+        'total' => 'Total',
+        'unread' => 'Unread',
+        'daily' => 'Received per day'
+      }
+
       if settings.development?
         # So we can see what's going wrong on Heroku.
         set :show_exceptions, true
@@ -172,10 +180,14 @@ require 'lpgmail/store'
 
     # User has authenticated, and now they can choose which mailboxes to see.
     # Or, they've already submitted the mailbox form, and there were errors.
+    # form_errors will have the error messages
+    # form_values will have form values we need to display again.
     get '/mailboxes/' do
       if session[:form_errors]
         @form_errors = Marshal.load(session[:form_errors])
         session[:form_errors] = nil
+        @form_values = Marshal.load(session[:form_values])
+        session[:form_values] = nil
       end
 
       # Sets up self.gmail
@@ -200,22 +212,42 @@ require 'lpgmail/store'
 
       mailboxes = gmail.get_mailboxes
 
+      # Set the valid values we allow from the form:
+      valid_mailbox_names = []
+      mailboxes.each do |mb|
+        unless mb.attr.include?(:Noselect)
+          valid_mailbox_names << mb.name
+        end
+      end
+
       # VALIDATE MAILBOX FORM.
-      # mailbox_selection = []
-      # for m in 1..settings.max_mailboxes
-
-      # end
-
-      p params
-
-      @form_errors['hi'] = 'ho'
+      mailbox_selection = []
+      for m in 1..settings.max_mailboxes
+        if params['mailbox-'+m]
+          mailbox_name = params['mailbox-'+m]
+          # Default metric is the first one:
+          metric = settings.valid_mailbox_metrics.keys[0]
+          if valid_mailbox_names.include? mailbox_name
+            if params['metric-'+m] && settings.valid_mailbox_metrics.has_key?(params['metric-'+m])
+              metric = params['metric-'+m]
+            end
+            mailbox_selection << {:name => mailbox_name,
+                                  :metric => metric}
+          else
+            @form_errors['mailbox-'+m] = "This isn't a valid mailbox name"
+            # Save these so we can set the form up again with user's choices:
+            @form_values['mailbox-'+m] = mailbox_name
+            @form_values['metric-'+m] = metric
+          end
+        end
+      end
 
       gmail.imap_disconnect
 
       if @form_errors.length > 0 
         # Something's up. 
         session[:form_errors] = Marshal.dump(@form_errors)
-        # STORE FORM SELECTIONS IN SESSION.
+        session[:form_values] = Marshal.dump(@form_values)
         redirect url('/mailboxes/')
       else
         # All good.
