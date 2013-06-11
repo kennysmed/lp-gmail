@@ -13,11 +13,21 @@ module LpGmail
 
 
     def initialize
-      # Will be set up in configure:
+      # Don't call these directly - use the gmail() and user_store() methods.
       @gmail = nil
       @user_store = nil 
     end
-    
+
+
+    def gmail
+      @gmail ||= LpGmail::Gmail.new(settings.google_client_id,
+                                    settings.google_client_secret)
+    end 
+
+    def user_store
+      @user_store ||= LpGmail::Store::User.new(settings.redis_url)
+    end
+
 
     configure do
 
@@ -33,6 +43,9 @@ module LpGmail
 
       set :redis_url, nil
 
+      config_file './config.yml'
+
+      # Overwrite config.yml settings if there are ENV variables.
       if ENV['GOOGLE_CLIENT_ID'] != nil
         set :google_client_id, ENV['GOOGLE_CLIENT_ID']
         set :google_client_secret, ENV['GOOGLE_CLIENT_SECRET']
@@ -40,14 +53,6 @@ module LpGmail
       if ENV['REDISCLOUD_URL'] != nil
         set :redis_url, ENV['REDISCLOUD_URL']
       end
-
-      if ! settings.google_client_id
-        config_file './config.yml'
-      end
-
-      @gmail = LpGmail::Gmail.new(settings.google_client_id,
-                                                settings.google_client_secret)
-      @user_store = LpGmail::Store::User.new(settings.redis_url)
     end
 
 
@@ -57,7 +62,7 @@ module LpGmail
       # things like fetch mailbox data.
       def gmail_login(refresh_token)
         begin
-          @gmail.login(refresh_token)
+          gmail.login(refresh_token)
         rescue OAuth2::Error => error
           halt error.code, "Error when trying to log in: #{error_description}"
         rescue Net::IMAP::ResponseError => error
@@ -127,7 +132,7 @@ module LpGmail
       session[:bergcloud_return_url] = params['return_url']
       session[:bergcloud_error_url] = params['error_url']
 
-      redirect @gmail.authorize_url(url('/return/'))
+      redirect gmail.authorize_url(url('/return/'))
     end
 
 
@@ -143,7 +148,7 @@ module LpGmail
       end
 
       begin
-        @gmail.fetch_token(params[:code], url('/return/'))
+        gmail.fetch_token(params[:code], url('/return/'))
       rescue OAuth2::Error => error
         return error.code, "Error when trying to get an access token from Google (1a): #{error_description}"
       rescue => error
@@ -151,11 +156,11 @@ module LpGmail
       end
 
       # Save this for now, as we'll save it in DB once we've finished.
-      session[:refresh_token] = @gmail.refresh_token
+      session[:refresh_token] = gmail.refresh_token
       # We'll use this in the next stage when checking their email address.
-      session[:access_token] = @gmail.access_token
+      session[:access_token] = gmail.access_token
 
-      @gmail.imap_disconnect
+      gmail.imap_disconnect
 
       # Now choose the mailboxes.
       redirect url('/setup/')
@@ -173,10 +178,10 @@ module LpGmail
       # Sets up @gmail.
       gmail_login(session[:refresh_token])
 
-      @email = @gmail.user_data['email']
-      @mailboxes = @gmail.get_mailboxes
+      @email = gmail.user_data['email']
+      @mailboxes = gmail.get_mailboxes
 
-      @gmail.imap_disconnect
+      gmail.imap_disconnect
 
       erb :setup
     end
@@ -190,11 +195,11 @@ module LpGmail
 
       gmail_login(session[:refresh_token])
 
-      mailboxes = @gmail.get_mailboxes
+      mailboxes = gmail.get_mailboxes
 
       # VALIDATE MAILBOX FORM.
 
-      @gmail.imap_disconnect
+      gmail.imap_disconnect
 
       if @form_errors.length > 0 
         # Something's up. 
@@ -223,12 +228,12 @@ module LpGmail
 
       gmail_login(user[:refresh_token])
 
-      @user_data = @gmail.user_data
+      @user_data = gmail.user_data
 
       @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
                     :important => get_mailbox_data(imap, '[Gmail]/Important')}
 
-      @gmail.imap_disconnect
+      gmail.imap_disconnect
 
       # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:
