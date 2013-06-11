@@ -33,21 +33,8 @@
     .config-error {
       color: #900;
     }
-    .label {
-      display: inline-block;
-      width: 120px;
-    }
-    .input {
-      display: inline-block;
-      width: 300px;
-    }
-    .config-email {
-      font-family: Helvetica, Arial, sans-serif;
-      font-size: 16px;
-      width: 290px;
-    }
-    .config-submit {
-      text-align: right;
+    .config-mailbox-options {
+      display: none;
     }
     .config-submit-button {
       background: #FED84D;
@@ -68,6 +55,7 @@
       color: #BBB;
     }
   </style>
+
 </head>
 <body>
   <div class="config">
@@ -81,24 +69,61 @@
 		  <p>For each one you can choose a different statistic to monitor. You can choose the same mailbox or label multiple times, but with different statistics.</p>
 
       <% for m in 1..settings.max_mailboxes %>
-        <p>
-          <select name="mailbox-<%= m %>">
+        <p class="config-mailbox">
+          <select name="mailbox-<%= m %>" data-options-element="config-mailbox-options-<%= m %>">
+            <option value="">Select a mailbox…</option>
             <% @mailboxes.each do |mb| %>
               <% unless mb.attr.include?(:Noselect) %>
                 <option value="<%= mb.name %>"><%= mb.name %></option>
               <% end %>
             <% end %> 
           </select>
+          <span class="config-mailbox-options" id="config-mailbox-options-<%= m %>">
+            <br />
+            <input type="radio" name="metric-<%= m %>" value="total" id="metric-<%= m %>-total">
+            <label for="metric-<%= m %>-total">Total messages</label>
+            <input type="radio" name="metric-<%= m %>" value="unread" id="metric-<%= m %>-unread">
+            <label for="metric-<%= m %>-unread">Unread message count</label>
+            <input type="radio" name="metric-<%= m %>" value="daily" id="metric-<%= m %>-daily">
+            <label for="metric-<%= m %>-daily">Received per day</label>
+          </span>
         </p>
       <% end %>
 
 		  <p>
-		    <span class="label">&nbsp;</span><span class="input"><input type="submit" value="Submit" class="config-submit-button" /></span>
+		    <input type="submit" value="Submit" class="config-submit-button" />
 		  </p>
 		</form>
 
 
   </div> <!-- .config -->
 
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function(){
+
+      // $select is a <select> element.
+      var set_radios = function($select) {
+        var $radios = $('#' + $select.data('options-element'));
+
+        if ($select.val() == '') {
+          $radios.slideUp(); // Hide the options.
+        } else {
+          $radios.slideDown(); // Show the optinos.
+        };
+      };
+
+      // Hide the correct mailbox options on page load.
+      $('.config-mailbox select').each(function(){
+        set_radios($(this));
+      });
+
+      // When the user chooses (or not) a mailbox, show the options.
+      $('.config-mailbox select').change(function(){
+        set_radios($(this));
+      });
+
+    });
+  </script>
 </body>
 </html>
