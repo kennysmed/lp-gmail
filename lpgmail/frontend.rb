@@ -11,9 +11,25 @@ module LpGmail
     set :public_folder, 'public'
     set :views, settings.root + '/../views'
 
+
     def initialize
-      @gmail = LpGmail::Gmail.new
-      @user_store = LpGmail::Store::User.new
+      set :redis_url, nil
+
+      if ENV['GOOGLE_CLIENT_ID'] != nil
+        set :google_client_id, ENV['GOOGLE_CLIENT_ID']
+        set :google_client_secret, ENV['GOOGLE_CLIENT_SECRET']
+      end
+      if ENV['REDISCLOUD_URL'] != nil
+        set :redis_url, ENV['REDISCLOUD_URL']
+      end
+
+      if ! settings.google_client_id
+        config_file './config.yml'
+      end
+
+      @gmail = LpGmail::Gmail.new(settings.google_client_id,
+                                                settings.google_client_secret)
+      @user_store = LpGmail::Store::User.new(settings.redis_url)
     end
 
     configure do

@@ -8,9 +8,9 @@ module LpGmail
     class RedisBase
       attr_accessor :redis
 
-      def initialize
-        if ENV['REDISCLOUD_URL']
-          uri = URI.parse(ENV['REDISCLOUD_URL'])
+      def initialize(redis_url=nil)
+        if redis_url != nil
+          uri = URI.parse(redis_url)
           redis = ::Redis.new(:host => uri.host, :port => uri.port,
                                                     :password => uri.password)
         else

@@ -8,9 +8,9 @@ module LpGmail
 
     attr_reader :user_data
 
-    def initialize
+    def initialize(google_client_id, google_client_secret)
       @auth_client = OAuth2::Client.new(
-        ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], {
+        google_client_id, google_client_secret, {
           :site => 'https://accounts.google.com',
           :authorize_url => '/o/oauth2/auth',
           :token_url => '/o/oauth2/token'
