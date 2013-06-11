@@ -201,6 +201,14 @@ require 'lpgmail/store'
       mailboxes = gmail.get_mailboxes
 
       # VALIDATE MAILBOX FORM.
+      # mailbox_selection = []
+      # for m in 1..settings.max_mailboxes
+
+      # end
+
+      p params
+
+      @form_errors{'hi' => 'ho'}
 
       gmail.imap_disconnect
 
