@@ -84,6 +84,9 @@
       <ul class="config-mailboxes">
         <% for m in 1..settings.max_mailboxes %>
           <li class="config-mailbox">
+            <% if @form_errors.has_key?("mailbox-#{m}") %>
+              <p class="config-error"><%= @form_errors["mailbox-#{m}"] %></p>
+            <% end %>
             <select name="mailbox-<%= m %>" data-options-element="config-mailbox-metrics-<%= m %>">
               <option value="">Select a mailbox…</option>
               <% @mailboxes.each do |mb| %>
