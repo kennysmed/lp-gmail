@@ -15,6 +15,7 @@ module LpGmail
 
 
     def initialize
+      super()
       # Don't call these directly - use the gmail() and user_store() methods.
       @gmail = nil
       @user_store = nil 
