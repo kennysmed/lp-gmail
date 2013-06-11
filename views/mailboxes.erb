@@ -88,7 +88,7 @@
               <option value="">Select a mailbox…</option>
               <% @mailboxes.each do |mb| %>
                 <% unless mb.attr.include?(:Noselect) %>
-                  <option value="<%= mb.name %>"<% if @form_values['mailbox-'+m] && @form_values['mailbox-'+m] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
+                  <option value="<%= mb.name %>"<% if @form_values["mailbox-#{m}"] && @form_values["mailbox-#{m}"] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
                 <% end %>
               <% end %> 
             </select>
