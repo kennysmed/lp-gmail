@@ -1,11 +1,13 @@
 # coding: utf-8
 require 'sinatra/base'
+require 'sinatra/config_file'
 require 'lpgmail/gmail'
 require 'lpgmail/store'
 
 
 module LpGmail
   class Frontend < Sinatra::Base
+    register Sinatra::ConfigFile
 
     set :sessions, true
     set :public_folder, 'public'
