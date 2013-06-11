@@ -80,6 +80,15 @@
 
 		  <p>For each one you can choose a different statistic to monitor. You can choose the same mailbox or label multiple times, but with different statistics.</p>
 
+      <% for m in 1..settings.max_mailboxes %>
+        <p>
+          <select name="mailbox-<%= m %>">
+            <% @mailboxes.each do |mb| %>
+              <option value="<%= mb.name %>"><%= mb.name %></option>
+            <% end %> 
+          </select>
+        </p>
+      <% end %>
 
 		  <p>
 		    <span class="label">&nbsp;</span><span class="input"><input type="submit" value="Submit" class="config-submit-button" /></span>

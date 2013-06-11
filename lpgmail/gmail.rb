@@ -112,29 +112,14 @@ module LpGmail
     # #<struct Net::IMAP::MailboxList attr=[:Noselect, :Haschildren], delim="/", name="Parent/Folder">
     # #<struct Net::IMAP::MailboxList attr=[:Hasnochildren], delim="/", name="Parent/Folder/Mailbox">
     def get_mailboxes()
-      mailboxes = []
 
       begin
         mblist = @imap_client.list('', '*')
       rescue
-        return mailboxes
+        return [] 
       end
 
-      # Most of the mailboxes are in the correct order, but we want to move
-      # these ones to the front because they're displayed first in Gmail.
-      # So we delete them from mblist and append to mailboxes.
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == 'INBOX' } )
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Starred' } )
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Important' } )
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Sent Mail' } )
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Drafts' } )
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Spam' } )
-      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Bin' } )
-
-      # Now put the rest of the mailboxes on the end.
-      mailboxes.concat mblist
-
-      return mailboxes
+      return order_mailboxes(mblist)
     end
 
 
@@ -167,6 +152,30 @@ module LpGmail
       imap_connect()
       @imap_client.authenticate('XOAUTH2', @user_data['email'],
                                                       @access_token_obj.token)
+    end
+
+
+    # Put the list of mailboxes into the order we want - the same as in Gmail.
+    # mblist is a list of Net::IMAP::MailboxList objects.
+    # We return the same, only the order is changed.
+    def order_mailboxes(mblist)
+      mailboxes = []
+
+      # Most of the mailboxes are in the correct order, but we want to move
+      # these ones to the front because they're displayed first in Gmail.
+      # So we delete them from mblist and append to mailboxes.
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == 'INBOX' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Starred' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Important' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Sent Mail' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Drafts' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Spam' } )
+      mailboxes << mblist.delete( mblist.find{ |m| m.name == '[Gmail]/Bin' } )
+
+      # Now put the rest of the mailboxes on the end.
+      mailboxes.concat mblist
+
+      return mailboxes
     end
 
 

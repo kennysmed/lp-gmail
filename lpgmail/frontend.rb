@@ -5,16 +5,16 @@ require 'lpgmail/gmail'
 require 'lpgmail/store'
 
 
-module LpGmail
-  class Frontend < Sinatra::Base
-    register Sinatra::ConfigFile
+  module LpGmail
+    class Frontend < Sinatra::Base
+      register Sinatra::ConfigFile
 
-    set :sessions, true
-    set :public_folder, 'public'
-    set :views, settings.root + '/../views'
+      set :sessions, true
+      set :public_folder, 'public'
+      set :views, settings.root + '/../views'
 
 
-    def initialize
+      def initialize
       super()
       # Don't call these directly - use the gmail() and user_store() methods.
       @gmail = nil
@@ -178,7 +178,7 @@ module LpGmail
         session[:form_errors] = nil
       end
 
-      # Sets up @gmail.
+      # Sets up self.gmail
       gmail_login(session[:refresh_token])
 
       @email = gmail.user_data['email']
