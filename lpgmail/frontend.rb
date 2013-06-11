@@ -208,7 +208,7 @@ require 'lpgmail/store'
 
       p params
 
-      @form_errors{'hi' => 'ho'}
+      @form_errors['hi'] = 'ho'
 
       gmail.imap_disconnect
 
