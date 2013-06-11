@@ -39,7 +39,7 @@ require 'lpgmail/store'
 
       # The default metrics the user can choose in the form for each mailbox.
       # Mapping the form value => Readable label.
-      set :valid_mailbox_metrics = {
+      set :valid_mailbox_metrics, {
         'total' => 'Total',
         'unread' => 'Unread',
         'daily' => 'Received per day'
