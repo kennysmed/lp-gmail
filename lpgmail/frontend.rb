@@ -19,6 +19,7 @@ require 'lpgmail/store'
       # Don't call these directly - use the gmail() and user_store() methods.
       @gmail = nil
       @user_store = nil 
+      @mailbox_store
     end
 
 
@@ -29,6 +30,10 @@ require 'lpgmail/store'
 
     def user_store
       @user_store ||= LpGmail::Store::User.new(settings.redis_url)
+    end
+
+    def mailbox_store
+      @mailbox_store ||= LpGmail::Store::Mailbox.new(settings.redis_url)
     end
 
 
@@ -305,7 +310,14 @@ require 'lpgmail/store'
       # @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
       #               :important => get_mailbox_data(imap, '[Gmail]/Important')}
 
-      gmail.fetch_daily_counts(user[:mailboxes])
+      # Will add today's daily counts to each mailbox/metric pair.
+      @mailboxes = gmail.get_daily_counts(user[:mailboxes])
+
+      mailbox_store.store_set(id, @mailboxes)
+
+      @mailboxes.each do |mb|
+        p mailbox_store.get(id, mb[:name], mb[:metric])
+      end
 
       gmail.imap_disconnect
 
@@ -319,10 +331,6 @@ require 'lpgmail/store'
     get '/sample/' do
       etag Digest::MD5.hexdigest('sample' + Date.today.strftime('%d%m%Y'))
       erb :publication
-    end
-
-
-    post '/validate_config/' do
     end
 
   end

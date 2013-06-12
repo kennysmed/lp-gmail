@@ -23,6 +23,7 @@ module LpGmail
 
       @access_token_obj = nil
 
+      # Will be a structure of basic data from Google about a user. Email etc.
       @user_data = {}
     end
 
@@ -128,12 +129,12 @@ module LpGmail
     #   {:name=>"[Gmail]/Sent Mail", :metric=>"unread"},
     #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
     # ] 
-    def fetch_daily_counts(mailboxes)
+    def get_daily_counts(mailboxes)
       mailboxes.each_with_index do |mb, i|
         mailboxes[i][:count] = get_mailbox_count(mb[:name], mb[:metric]) 
       end 
       # mailboxes now contains the [:count] element for each mailbox+metric.
-      p mailboxes
+      return mailboxes
     end
 
 

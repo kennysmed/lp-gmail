@@ -48,5 +48,44 @@ module LpGmail
       end
     end
 
+
+    # Stores up to @days_to_store worth of message counts for a particular
+    # user/mailbox/metric combination.
+    class Mailbox < RedisBase
+
+      def initialize(redis_url=nil)
+        super(redis_url)
+
+        @days_to_store = 30
+      end
+
+      # For an array of mailboxes, store the count for each one.
+      # id is the unique User ID.
+      def store_set(id, mailboxes)
+        mailboxes.each do |mb|
+          store(id, mb[:name], mb[:metric], mb[:count])
+        end
+      end
+
+      # Store a single count for a user/mailbox/metric combination.
+      # It's added on to the end of the list for that combo, and the oldest
+      # value is removed.
+      def store(id, mailbox_name, metric, count)
+        key = "#{id}:#{mailbox_name}:#{metric}"
+        redis.rpush(key, count)
+        redis.ltrim(key, 0, @days_to_store-1)
+      end
+
+      # Delete a particular combination and its data. 
+      def del(id, mailbox_name, metric)
+        redis.del("#{id}:#{mailbox_name}:#{metric}")
+      end
+
+      # Get the array of daily counts for a user/mailbox/metric combination.
+      def get(id, mailbox_name, metric)
+        redis.lrange("#{id}:#{mailbox_name}:#{metric}", 0, -1)
+      end
+    end
+
   end
 end
