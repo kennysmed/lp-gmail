@@ -263,6 +263,7 @@ require 'lpgmail/store'
       else
         # All good.
         # STORE SELECTED MAILBOX INFO IN OUR REDIS STORE.
+        p mailbox_selection
         id = user_store.store(session[:refresh_token])
         session[:access_token] = nil
         session[:refresh_token] = nil
