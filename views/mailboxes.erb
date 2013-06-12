@@ -80,6 +80,10 @@
 
 		  <p>For each one, pick a different statistic to monitor. You can choose the same mailbox multiple times, but with different statistics.</p>
 
+      <% if @form_errors.has_key?('general') %>
+        <p class="config-error"><%= @form_errors['general'] %></p>
+      <% end %>
+
       <ul class="config-mailboxes">
         <% for m in 1..settings.max_mailboxes %>
           <li class="config-mailbox">

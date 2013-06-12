@@ -253,6 +253,10 @@ require 'lpgmail/store'
         end
       end
 
+      if mailbox_selection.length == 0
+        @form_errors["general"] = "Please select at least one mailbox"
+      end
+
       gmail.imap_disconnect
 
       if @form_errors.length > 0 
