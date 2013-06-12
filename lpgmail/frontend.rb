@@ -197,7 +197,7 @@ require 'lpgmail/store'
         # Set default values.
         for m in 1..settings.max_mailboxes
           @form_values['mailbox-1'] = 'INBOX'
-          @form_values['metric-'+m] = default_metric()
+          @form_values["metric-#{m}"] = default_metric()
         end
       end
 
