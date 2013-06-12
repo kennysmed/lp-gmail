@@ -235,10 +235,10 @@ require 'lpgmail/store'
       # VALIDATE MAILBOX FORM.
       mailbox_selection = []
       for m in 1..settings.max_mailboxes
-        # Defaults:
+        # Default for each type of form value:
         mailbox_name = ''
         metric = default_metric()
-        if params.include?("mailbox-#{m}")
+        if params.include?("mailbox-#{m}") && params["mailbox-#{m}"] != ''
           mailbox_name = params["mailbox-#{m}"]
           if valid_mailbox_names.include? mailbox_name
             if params["metric-#{m}"] && settings.valid_mailbox_metrics.has_key?(params["metric-#{m}"])
