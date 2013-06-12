@@ -275,12 +275,11 @@ require 'lpgmail/store'
         session[:form_values] = Marshal.dump(@form_values)
         redirect url('/mailboxes/')
       else
-        # All good.
+        # All good - save the data and go back to BERG Cloud to finish.
         id = user_store.store(session[:refresh_token], mailbox_selection)
         session[:access_token] = nil
         session[:refresh_token] = nil
         session[:form_errors] = nil
-        p user_store.get(id)
         redirect "#{session[:bergcloud_return_url]}?config[id]=#{id}"
       end
     end

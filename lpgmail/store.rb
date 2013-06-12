@@ -30,7 +30,7 @@ module LpGmail
     #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
     # ] 
     class User < RedisBase
-      def store(refresh_token)
+      def store(refresh_token, mailboxes)
         id = UUID.generate
         redis.hset(:user, id, Marshal.dump({:refresh_token => refresh_token,
                                             :mailboxes => mailboxes}))
