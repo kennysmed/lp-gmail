@@ -20,7 +20,17 @@
 <body>
   <h1>Gmail</h1>
 
-  <p>Hi!</p>
+  <% @mailboxes.each do |mb| %>
+    <h2><%= mb[:name] %> - <%= mb[:metric] %></h2>
+
+    <p>
+      <% @mb[:history].each do |num| %>
+        <%= num %>
+      <% end %>
+    </p>
+
+
+  <% end %>
 
 </body>
 </html>

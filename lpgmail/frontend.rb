@@ -313,10 +313,12 @@ require 'lpgmail/store'
       # Will add today's daily counts to each mailbox/metric pair.
       @mailboxes = gmail.get_daily_counts(user[:mailboxes])
 
+      # Save today's data with the existing older data.
       mailbox_store.store_set(id, @mailboxes)
 
-      @mailboxes.each do |mb|
-        p mailbox_store.get(id, mb[:name], mb[:metric])
+      # Will add the historical data to each mailbox/metric pair.
+      @mailboxes.each_with_index do |mb, i|
+        @mailboxes[i][:history] = mailbox_store.get(id, mb[:name], mb[:metric]) 
       end
 
       gmail.imap_disconnect
