@@ -23,3 +23,7 @@ The `REDISCLOUD_URL` setting is optional. If it's missing then Redis will just u
 
 If both the environment variables and `config.yml` is present, the former is given precedence.
 
+
+----
+
+BERG Cloud Developer documentation: http://remote.bergcloud.com/developers/
