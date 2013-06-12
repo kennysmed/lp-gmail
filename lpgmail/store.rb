@@ -21,11 +21,19 @@ module LpGmail
     end
 
 
-    # Keeps track of oauth refresh_tokens for each user.
+    # Keeps track of data about each user.
+    # refresh_token is the Google OAuth2 token for re-authenticating the user.
+    # mailboxes will be an array something like this:
+    # [
+    #   {:name=>"INBOX", :metric=>"total"},
+    #   {:name=>"[Gmail]/Sent Mail", :metric=>"unread"},
+    #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
+    # ] 
     class User < RedisBase
       def store(refresh_token)
         id = UUID.generate
-        redis.hset(:user, id, Marshal.dump([refresh_token]))
+        redis.hset(:user, id, Marshal.dump({:refresh_token => refresh_token,
+                                            :mailboxes => mailboxes}))
         return id
       end
 
@@ -35,10 +43,7 @@ module LpGmail
 
       def get(id)
         if data = redis.hget(:user, id)
-          arr = Marshal.load(data)
-          return {
-            :refresh_token => arr[1]
-          }
+          Marshal.load(data)
         end
       end
     end

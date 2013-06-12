@@ -224,7 +224,8 @@ require 'lpgmail/store'
 
       mailboxes = gmail.get_mailboxes
 
-      # Set the valid values we allow from the form:
+      # Set the valid mailbox values we allow from the form:
+      # We also use settings.valid_mailbox_metrics.
       valid_mailbox_names = []
       mailboxes.each do |mb|
         unless mb.attr.include?(:Noselect)
@@ -233,6 +234,13 @@ require 'lpgmail/store'
       end
 
       # VALIDATE MAILBOX FORM.
+      # Valid submitted data will end up in mailbox_selection, which will
+      # be something like this:
+      # [
+      #   {:name=>"INBOX", :metric=>"total"},
+      #   {:name=>"[Gmail]/Sent Mail", :metric=>"unread"},
+      #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
+      # ] 
       mailbox_selection = []
       for m in 1..settings.max_mailboxes
         # Default for each type of form value:
@@ -268,12 +276,11 @@ require 'lpgmail/store'
         redirect url('/mailboxes/')
       else
         # All good.
-        # STORE SELECTED MAILBOX INFO IN OUR REDIS STORE.
-        p mailbox_selection
-        id = user_store.store(session[:refresh_token])
+        id = user_store.store(session[:refresh_token], mailbox_selection)
         session[:access_token] = nil
         session[:refresh_token] = nil
         session[:form_errors] = nil
+        p user_store.get(id)
         redirect "#{session[:bergcloud_return_url]}?config[id]=#{id}"
       end
     end
