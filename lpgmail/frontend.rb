@@ -238,7 +238,7 @@ require 'lpgmail/store'
         # Defaults:
         mailbox_name = ''
         metric = default_metric()
-        if params["mailbox-#{m}"]
+        if params.include?("mailbox-#{m}")
           mailbox_name = params["mailbox-#{m}"]
           if valid_mailbox_names.include? mailbox_name
             if params["metric-#{m}"] && settings.valid_mailbox_metrics.has_key?(params["metric-#{m}"])
