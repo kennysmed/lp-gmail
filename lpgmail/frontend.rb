@@ -119,6 +119,9 @@ require 'lpgmail/store'
         return data
       end
 
+      def default_metric()
+        settings.valid_mailbox_metrics.keys[0]
+      end
 
       def format_title()
         "Gmail Little Printer Publication"
@@ -194,7 +197,7 @@ require 'lpgmail/store'
         # Set default values.
         for m in 1..settings.max_mailboxes
           @form_values['mailbox-1'] = 'INBOX'
-          @form_values['metric-'+m] = settings.valid_mailbox_metrics.keys[0]
+          @form_values['metric-'+m] = default_metric()
         end
       end
 
@@ -232,21 +235,20 @@ require 'lpgmail/store'
       # VALIDATE MAILBOX FORM.
       mailbox_selection = []
       for m in 1..settings.max_mailboxes
-        if params['mailbox-'+m]
-          mailbox_name = params['mailbox-'+m]
-          # Default metric is the first one:
-          metric = settings.valid_mailbox_metrics.keys[0]
+        if params["mailbox-#{m}"]
+          mailbox_name = params["mailbox-#{m}"]
+          metric = default_metric()
           if valid_mailbox_names.include? mailbox_name
-            if params['metric-'+m] && settings.valid_mailbox_metrics.has_key?(params['metric-'+m])
-              metric = params['metric-'+m]
+            if params["metric-#{m}"] && settings.valid_mailbox_metrics.has_key?(params["metric-#{m}"])
+              metric = params["metric-#{m}"]
             end
             mailbox_selection << {:name => mailbox_name,
                                   :metric => metric}
           else
-            @form_errors['mailbox-'+m] = "This isn't a valid mailbox name"
+            @form_errors["mailbox-#{m}"] = "This isn't a valid mailbox name"
             # Save these so we can set the form up again with user's choices:
-            @form_values['mailbox-'+m] = mailbox_name
-            @form_values['metric-'+m] = metric
+            @form_values["mailbox-#{m}"] = mailbox_name
+            @form_values["metric-#{m}"] = metric
           end
         end
       end
