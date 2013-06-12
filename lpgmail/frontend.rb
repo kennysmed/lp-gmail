@@ -235,9 +235,11 @@ require 'lpgmail/store'
       # VALIDATE MAILBOX FORM.
       mailbox_selection = []
       for m in 1..settings.max_mailboxes
+        # Defaults:
+        mailbox_name = ''
+        metric = default_metric()
         if params["mailbox-#{m}"]
           mailbox_name = params["mailbox-#{m}"]
-          metric = default_metric()
           if valid_mailbox_names.include? mailbox_name
             if params["metric-#{m}"] && settings.valid_mailbox_metrics.has_key?(params["metric-#{m}"])
               metric = params["metric-#{m}"]
@@ -246,11 +248,11 @@ require 'lpgmail/store'
                                   :metric => metric}
           else
             @form_errors["mailbox-#{m}"] = "This isn't a valid mailbox name"
-            # Save these so we can set the form up again with user's choices:
-            @form_values["mailbox-#{m}"] = mailbox_name
-            @form_values["metric-#{m}"] = metric
           end
         end
+        # Save these in case we need to set the form up again with user's choices:
+        @form_values["mailbox-#{m}"] = mailbox_name
+        @form_values["metric-#{m}"] = metric
       end
 
       if mailbox_selection.length == 0
