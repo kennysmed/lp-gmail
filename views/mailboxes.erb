@@ -46,7 +46,6 @@
         font-size: 1em;
       }
       .config-mailbox-metrics {
-        display: none;
         margin-top: 0.3em;
         margin-bottom: 0;
       }
@@ -87,7 +86,7 @@
             <% if @form_errors.has_key?("mailbox-#{m}") %>
               <p class="config-error"><%= @form_errors["mailbox-#{m}"] %></p>
             <% end %>
-            <select name="mailbox-<%= m %>" data-options-element="config-mailbox-metrics-<%= m %>">
+            <select name="mailbox-<%= m %>" data-metric-element="config-mailbox-metrics-<%= m %>">
               <option value="">Select a mailbox…</option>
               <% @mailboxes.each do |mb| %>
                 <% unless mb.attr.include?(:Noselect) %>
@@ -131,8 +130,10 @@
       };
 
       // Hide the correct mailbox metrics on page load.
-      $('.config-mailbox select').each(function(){
-        set_radios($(this));
+      $('.config-mailbox select').each(function(idx){
+        if (idx > 0) {
+          set_radios($(this));
+        };
       });
 
       // When the user chooses (or not) a mailbox, show the metrics.
