@@ -130,10 +130,8 @@
       };
 
       // Hide the correct mailbox metrics on page load.
-      $('.config-mailbox select').each(function(idx){
-        if (idx > 0) {
-          set_radios($(this));
-        };
+      $('.config-mailbox select').each(function(){
+        set_radios($(this));
       });
 
       // When the user chooses (or not) a mailbox, show the metrics.

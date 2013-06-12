@@ -190,6 +190,12 @@ require 'lpgmail/store'
         session[:form_errors] = nil
         @form_values = Marshal.load(session[:form_values])
         session[:form_values] = nil
+      else
+        # Set default values.
+        for m in 1..settings.max_mailboxes
+          @form_values['mailbox-1'] = 'INBOX'
+          @form_values['metric-'+m] = settings.valid_mailbox_metrics.keys[0]
+        end
       end
 
       # Sets up self.gmail
