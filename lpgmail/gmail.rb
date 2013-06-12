@@ -112,7 +112,6 @@ module LpGmail
     # #<struct Net::IMAP::MailboxList attr=[:Noselect, :Haschildren], delim="/", name="Parent/Folder">
     # #<struct Net::IMAP::MailboxList attr=[:Hasnochildren], delim="/", name="Parent/Folder/Mailbox">
     def get_mailboxes()
-
       begin
         mblist = @imap_client.list('', '*')
       rescue
@@ -123,8 +122,22 @@ module LpGmail
     end
 
 
-  private
+    # mailboxes will be like:
+    # [
+    #   {:name=>"INBOX", :metric=>"total"},
+    #   {:name=>"[Gmail]/Sent Mail", :metric=>"unread"},
+    #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
+    # ] 
+    def fetch_daily_counts(mailboxes)
+      mailboxes.each_with_index do |mb, i|
+        mailboxes[i][:count] = get_mailbox_count(mb[:name], mb[:metric]) 
+      end 
+      # mailboxes now contains the [:count] element for each mailbox+metric.
+      p mailboxes
+    end
 
+
+  private
 
     # Get a new access_token using the refresh_token that was stored when
     # the user signed up.
@@ -177,6 +190,55 @@ module LpGmail
       mailboxes.concat mblist
 
       return mailboxes
+    end
+
+
+    # Get a single number for a particular mailbox.
+    # mailbox_name is like '[Gmail]/Important' or 'INBOX'.
+    # metric is one of the valid_mailbox_metrics in Frontend.
+    # We return either a number for that metric, or a string of 'error' if
+    # there was an error (eg, if a mailbox no longer exists).
+    def get_mailbox_count(mailbox_name, metric)
+      # Total 
+      case metric
+      when 'total'
+        begin
+          return @imap_client.status(mailbox_name, ['MESSAGES'])['MESSAGES']
+        rescue => error
+          puts "Error getting Total for '#{mailbox_name}': #{error}"
+          return 'error'
+        end
+
+      when 'unread'
+        begin
+          return @imap_client.status(mailbox_name, ['UNSEEN'])['UNSEEN']
+        rescue => error
+          puts "Error getting Unread for '#{mailbox_name}': #{error}"
+          return 'error'
+        end
+
+      when 'flagged'
+        begin
+          @imap_client.examine(mailbox_name)
+          return @imap_client.search(['FLAGGED']).length
+        rescue => error
+          puts "Error getting Flagged for '#{mailbox_name}': #{error}"
+          return 'error'
+        end
+
+      when 'daily'
+        time_since = Time.now - (86400 * 1)
+        begin
+          @imap_client.examine(mailbox_name)
+          return @imap_client.search(['SINCE', time_since]).length
+        rescue => error
+          puts "Error getting Daily for '#{mailbox_name}': #{error}"
+          return 'error'
+        end
+      else
+        puts "Invalid metric provided for '#{mailbox_name}': '#{metric}'"
+        'error'
+      end
     end
 
 

@@ -39,9 +39,12 @@ require 'lpgmail/store'
 
       # The default metrics the user can choose in the form for each mailbox.
       # Mapping the form value => Readable label.
+      # To add a new one, add it here, and then add something to get the
+      # data in LpGmail::Gmail::get_mailbox_count().
       set :valid_mailbox_metrics, {
         'total' => 'Total',
         'unread' => 'Unread',
+        'flagged' => 'Starred',
         'daily' => 'Received per day'
       }
 
@@ -86,38 +89,38 @@ require 'lpgmail/store'
       # Fetch data about an individual Gmail mailbox.
       # `mailbox` is the name of the mailbox, eg 'INBOX', '[Gmail]/Important'.
       # Returns a hash of information.
-      def get_mailbox_data(imap, mailbox)
-        data = {}
+      # def get_mailbox_data(imap, mailbox)
+      #   data = {}
 
-        # We could also use 'RECENT', but Gmail's IMAP implementation
-        # doesn't support that.
-        # https://support.google.com/mail/answer/78761?hl=en
-        mailbox_status = imap.status(mailbox, ['MESSAGES', 'UNSEEN'])
+      #   # We could also use 'RECENT', but Gmail's IMAP implementation
+      #   # doesn't support that.
+      #   # https://support.google.com/mail/answer/78761?hl=en
+      #   mailbox_status = imap.status(mailbox, ['MESSAGES', 'UNSEEN'])
 
-        data[:all_count] = mailbox_status['MESSAGES']
-        data[:unseen_count] = mailbox_status['UNSEEN']
+      #   data[:all_count] = mailbox_status['MESSAGES']
+      #   data[:unseen_count] = mailbox_status['UNSEEN']
 
-        begin
-          imap.examine(mailbox)
-        rescue => error
-          halt 500, "Error examining #{mailbox}: #{error}"
-        end
+      #   begin
+      #     imap.examine(mailbox)
+      #   rescue => error
+      #     halt 500, "Error examining #{mailbox}: #{error}"
+      #   end
 
-        begin
-          data[:flagged_count] = imap.search(['FLAGGED']).length
-        rescue => error
-          halt 500, "Error counting flagged in #{mailbox}: #{error}"
-        end
+      #   begin
+      #     data[:flagged_count] = imap.search(['FLAGGED']).length
+      #   rescue => error
+      #     halt 500, "Error counting flagged in #{mailbox}: #{error}"
+      #   end
 
-        time_since = Time.now - (86400 * 1)
-        begin
-          data[:recent_count] = imap.search(['SINCE', time_since]).length
-        rescue => error
-          halt 500, "Error counting recent in #{mailbox}: #{error}"
-        end
+      #   time_since = Time.now - (86400 * 1)
+      #   begin
+      #     data[:recent_count] = imap.search(['SINCE', time_since]).length
+      #   rescue => error
+      #     halt 500, "Error counting recent in #{mailbox}: #{error}"
+      #   end
 
-        return data
-      end
+      #   return data
+      # end
 
       def default_metric()
         settings.valid_mailbox_metrics.keys[0]
@@ -287,6 +290,7 @@ require 'lpgmail/store'
 
     get '/edition/' do
       id = params[:id]
+      puts "Edition for #{id}"
       user = user_store.get(id)
 
       if !user
@@ -295,10 +299,13 @@ require 'lpgmail/store'
 
       gmail_login(user[:refresh_token])
 
-      @user_data = gmail.user_data
+      # Email, name, etc.
+      @gmail_user_data = gmail.user_data
 
-      @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
-                    :important => get_mailbox_data(imap, '[Gmail]/Important')}
+      # @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
+      #               :important => get_mailbox_data(imap, '[Gmail]/Important')}
+
+      gmail.fetch_daily_counts(user[:mailboxes])
 
       gmail.imap_disconnect
 
