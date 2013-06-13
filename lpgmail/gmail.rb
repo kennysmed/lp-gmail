@@ -123,12 +123,14 @@ module LpGmail
     end
 
 
-    # mailboxes will be like:
+    # Fetches today's figure for each mailbox/metric combination in the
+    # mailboxes array, which is like:
     # [
     #   {:name=>"INBOX", :metric=>"total"},
     #   {:name=>"[Gmail]/Sent Mail", :metric=>"unread"},
     #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
     # ] 
+    # This method will add a :count element and return the array.
     def get_daily_counts(mailboxes)
       mailboxes.each_with_index do |mb, i|
         mailboxes[i][:count] = get_mailbox_count(mb[:name], mb[:metric]) 

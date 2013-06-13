@@ -56,8 +56,8 @@ module LpGmail
     # dumb and just stores a list of figures, one per day.
     class Mailbox < RedisBase
 
-      def initialize
-        super
+      def initialize(redis_url=nil)
+        super(redis_url)
         @redis = Redis::Namespace.new(:mailboxes, :redis => @redis)
 
         @days_to_store = 30
@@ -65,17 +65,21 @@ module LpGmail
 
       # For an array of mailboxes, store the count for each one.
       # id is the unique User ID.
-      def store_set(id, mailboxes)
+      def store_array(id, mailboxes)
         mailboxes.each do |mb|
           store(id, mb[:name], mb[:metric], mb[:count])
         end
+      end
+
+      def make_key(id, mailbox_name, metric)
+        return "#{id}:#{mailbox_name}:#{metric}"
       end
 
       # Store a single count for a user/mailbox/metric combination.
       # It's added on to the end of the list for that combo, and the oldest
       # value is removed.
       def store(id, mailbox_name, metric, count)
-        key = "#{id}:#{mailbox_name}:#{metric}"
+        key = make_key(id, mailbox_name, metric)
         field = Date.today().strftime('%Y%m%d')
 
         redis.hset(key, field, count)
@@ -107,14 +111,19 @@ module LpGmail
 
       # Delete a particular user/mailbox/metric's data. 
       def del(id, mailbox_name, metric)
-        redis.del("#{id}:#{mailbox_name}:#{metric}")
+        redis.del( make_key(id, mailbox_name, metric) )
       end
 
       # Get the array of daily counts for a user/mailbox/metric combination.
+      # Returns an array of arrays, like:
+      # [[20130609, 31], [20130610, 19], ... ]
       def get(id, mailbox_name, metric)
-        # TODO:
-        # Need to get all the data out, sorted by field, and as integers.
-        redis.hrange("#{id}:#{mailbox_name}:#{metric}", 0, -1)
+        # Will result in an array of arrays, like:
+        # [["20130112", "34"], ["20130509", "31"], ... ]
+        arr = redis.hgetall(make_key(id, mailbox_name, metric)).sort
+        # Turn all those strings to ints.
+        arr.map! { |d| [ d[0].to_i, d[1].to_i ] }
+        return arr
       end
     end
 

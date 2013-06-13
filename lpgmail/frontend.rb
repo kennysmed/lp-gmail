@@ -296,6 +296,8 @@ require 'lpgmail/store'
     get '/edition/' do
       id = params[:id]
       puts "Edition for #{id}"
+
+      # Will have :refresh_token and :mailboxes keys.
       user = user_store.get(id)
 
       if !user
@@ -307,16 +309,15 @@ require 'lpgmail/store'
       # Email, name, etc.
       @gmail_user_data = gmail.user_data
 
-      # @mail_data = {:inbox => get_mailbox_data(imap, 'INBOX'),
-      #               :important => get_mailbox_data(imap, '[Gmail]/Important')}
-
       # Will add today's daily counts to each mailbox/metric pair.
+      # Each mailbox will then have :name, :metric and :count.
       @mailboxes = gmail.get_daily_counts(user[:mailboxes])
 
-      # Save today's data with the existing older data.
-      mailbox_store.store_set(id, @mailboxes)
+      # Save today's data in the DB with the existing older data.
+      mailbox_store.store_array(id, @mailboxes)
 
       # Will add the historical data to each mailbox/metric pair.
+      # Each array in @mailboxes will have :name, :metric, :count and :history.
       @mailboxes.each_with_index do |mb, i|
         @mailboxes[i][:history] = mailbox_store.get(id, mb[:name], mb[:metric]) 
       end
