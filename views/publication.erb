@@ -57,6 +57,47 @@
     .line {
       stroke-width: 4px;
     }
+    
+    h1, h2, h3, p {
+      margin: 0;
+      padding: 0;
+    }
+    .email {
+      white-space: nowrap;
+    }
+    .container {
+      margin-top: 10px;
+      border-top: 5px solid #000;
+      padding-bottom: 5px;
+      border-bottom: 5px solid #000;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 24px;
+      padding: 10px;
+    } 
+    h2 {
+      font-size: 20px;
+      background: #000;
+      color: #fff;
+      padding: 5px 10px;   
+      margin-bottom: 5px;
+    }
+    h3 {
+      padding: 5px 10px;
+      margin-bottom: 10px;
+      font-size: 20px;
+      font-weight: normal;
+    }
+    p {
+      border-top: 5px solid #000;
+      padding: 10px 10px;
+      line-height: 1.3em;
+    }
+    .chart {
+      margin: 0 0 20px 10px;
+    }
 
   </style>
 
@@ -122,33 +163,35 @@
 
 </head>
 <body>
-  <h1>Gmail for <%= @gmail_user_data["email"] %></h1>
+  <div class="container">
+    <h1>Gmail for <span class="email"><%= @gmail_user_data["email"] %></span></h1>
 
 
-  <% if days_of_data <= 1 %>
-    <p>There’s only one day’s worth of data so far. In a couple of days we
-      can start charting it…</p>
+    <% if days_of_data <= 1 %>
+      <p>There’s only one day’s worth of data so far. In a couple of days we
+        can start charting it…</p>
 
-  <% elsif days_of_data == 2 %>
-    <p>Tomorrow we’ll have a chart of your Gmail data…</p>
+    <% elsif days_of_data == 2 %>
+      <p>Tomorrow we’ll have a chart of your Gmail data…</p>
 
-  <% elsif days_of_data == 3 %>
-    <% if @mailboxes.length == 1 %>
-      <p>Here’s your first chart. It’ll look more interesting as the days go by…</p>
-    <% else %>
-      <p>Here are your first charts. They’ll look more interesting as the days go by…</p>
+    <% elsif days_of_data == 3 %>
+      <% if @mailboxes.length == 1 %>
+        <p>Here’s your first chart. It’ll look more interesting as the days go by…</p>
+      <% else %>
+        <p>Here are your first charts. They’ll look more interesting as the days go by…</p>
+      <% end %>
     <% end %>
-  <% end %>
 
 
-  <% @mailboxes.each_with_index do |mb, idx| %>
-    <h2><%= format_mailbox_name(mb[:name]) %></h2>
-    <h3><%= mb[:metric].capitalize %>: <%= pluralize(mb[:count], 'mail') %></h3>
+    <% @mailboxes.each_with_index do |mb, idx| %>
+      <h2><%= format_mailbox_name(mb[:name]) %></h2>
+      <h3><strong><%= mb[:metric].capitalize %> now: <%= pluralize(mb[:count], '</strong> message') %></h3>
 
-    <% if days_of_data >= 3 %>
-      <div id="chart-<%= idx %>" class='chart"'></div>
+      <% if days_of_data >= 3 %>
+        <div id="chart-<%= idx %>" class="chart"></div>
+      <% end %>
     <% end %>
-  <% end %>
+  </div>
 
 </body>
 </html>
