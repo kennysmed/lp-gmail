@@ -124,6 +124,7 @@
 <body>
   <h1>Gmail for <%= @gmail_user_data["email"] %></h1>
 
+
   <% if days_of_data <= 1 %>
     <p>There’s only one day’s worth of data so far. In a couple of days we
       can start charting it…</p>
@@ -139,8 +140,10 @@
     <% end %>
   <% end %>
 
+
   <% @mailboxes.each_with_index do |mb, idx| %>
-    <h2><%= format_mailbox_name(mb[:name]) %> - <%= mb[:metric] %></h2>
+    <h2><%= format_mailbox_name(mb[:name]) %></h2>
+    <h3><%= mb[:metric].capitalize %>: <%= pluralize(mb[:count], 'mail') %></h3>
 
     <% if days_of_data >= 3 %>
       <div id="chart-<%= idx %>" class='chart"'></div>

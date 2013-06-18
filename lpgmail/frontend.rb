@@ -100,6 +100,15 @@ require 'lpgmail/store'
         "Gmail Little Printer Publication"
       end
 
+      # Used in the template for pluralizing words.
+      def pluralize(num, word, ext='s')
+        if num.to_i == 1
+          return num.to_s + ' ' + word
+        else
+          return num.to_s + ' ' + word + ext
+        end
+      end
+
       # Strips the '[GMAIL]/' bit from mailbox names and adds spaces after
       # remaining slashes.
       # Passed '[GMAIL]/Important' it returns 'Important'.
@@ -333,6 +342,7 @@ require 'lpgmail/store'
         # Trim the historical data if asked:
         if days and days.to_i < 30
           @mailboxes[i][:history] = @mailboxes[i][:history][0...days.to_i]
+          @mailboxes[i][:count] = @mailboxes[i][:history].last[1]
         end
       end
 

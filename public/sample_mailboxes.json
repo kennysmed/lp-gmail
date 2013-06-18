@@ -39,7 +39,7 @@
 	{
 		"name": "[Gmail]/Important",
 		"metric": "total",
-		"count": 3,
+		"count": 102,
 		"history": [
 			[20130518, 143],
 			[20130519, 136],
@@ -76,7 +76,7 @@
 	{
 		"name": "Projects/Karina/Actions/Long/Folder/Name/Here",
 		"metric": "flagged",
-		"count": 3,
+		"count": 8,
 		"history": [
 			[20130518, 3],
 			[20130519, 6],
@@ -107,7 +107,7 @@
 			[20130613, 2],
 			[20130614, 5],
 			[20130615, 4],
-			[20130616, 3]
+			[20130616, 8]
 		]
 	}	
 ]
