@@ -109,6 +109,11 @@ require 'lpgmail/store'
         name = name.sub(%r{^(\[Gmail\]/)?(.*?)$}, "\\2")
         name.gsub(/\//, "/ ")
       end
+
+      # Just takes a YYYYMMDD format date and makes it into YYYY-MM-DD.
+      def format_date(date)
+        date.to_s[0, 4] + '-' + date.to_s[4, 2] + '-' + date.to_s[6, 2] 
+      end
     end
 
 
@@ -306,7 +311,17 @@ require 'lpgmail/store'
     end
 
 
-    get '/sample/' do
+    # A standard sample publication at /sample/
+    # Or add a number of days' history to view by doing /sample/1/ or
+    # /sample/25/ etc, up to 30.
+    get %r{/sample/(\d+/)?} do |days|
+
+      @gmail_user_data = {
+        "id"=>"123456789012345678901",
+        "email"=>"terry@example.com",
+        "verified_email"=>true,
+        "hd"=>"example.com"
+      }
 
       @mailboxes = JSON.parse( IO.read(Dir.pwd + '/public/sample_mailboxes.json') )
 
@@ -314,6 +329,10 @@ require 'lpgmail/store'
       @mailboxes.each_with_index do |mb, i|
         @mailboxes[i].keys.each do |key|
           @mailboxes[i][(key.to_sym rescue key) || key] = @mailboxes[i].delete(key)
+        end
+        # Trim the historical data if asked:
+        if days and days.to_i < 30
+          @mailboxes[i][:history] = @mailboxes[i][:history][0...days.to_i]
         end
       end
 

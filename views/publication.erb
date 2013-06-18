@@ -54,6 +54,10 @@
     /* End default LPChart styles. */
     /************************************************************************/
 
+    .line {
+      stroke-width: 4px;
+    }
+
   </style>
 
   <%# Include the d3 JS so that it renders inline. The BERG Cloud renderer seems to have problems when JS files are included as scripts. %>
@@ -61,21 +65,54 @@
   <%= erb(:js_lpchart, :layout => false) %>
 
   <script>
+
     window.onload = function() {
-      var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(120).yAxisTicks(4).xAxisTicks(6);
+      var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(120).yAxisTicks(4);
 
       var chart_data;
 
+      // For every mailbox....
       <% @mailboxes.each_with_index do |mb, idx| %>
         chart_data = [];
 
+        // Put all the dates and counts for this mailbox into chart_data.
         <% mb[:history].each do |date, num| %>
-          chart_data.push([
-            // Will be like '2013-12-31':
-            '<%= date.to_s[0, 4] %>-<%= date.to_s[4, 2] %>-<%= date.to_s[6, 2] %>',
-            <%= num %>
-          ]);
+          chart_data.push(['<%= format_date(date) %>', <%= num %>]);
         <% end %>
+
+        // We don't want to leave the generation of x-axis labels to d3 as
+        // they're sometimes a bit too sparse or crowded.
+        <% if mb[:history].length <= 6 %>
+          <% divisor = 1 %>
+        <% elsif mb[:history].length <= 12 %>
+          <% divisor = 2 %>
+        <% elsif mb[:history].length <= 18 %>
+          <% divisor = 3 %>
+        <% elsif mb[:history].length <= 24 %>
+          <% divisor = 4 %>
+        <% else %>
+          <% divisor = 5 %>
+        <% end %>
+
+        x_tick_values = [];
+        // Loop backwards, so we always have a label on the most recent point.
+        <% counter = 0 %>
+        <% mb[:history].reverse.each do |date, num| %>
+          <% if counter % divisor == 0 %>
+            x_tick_values.push('<%= format_date(date) %>');
+          <% end %>
+          <% counter += 1 %>
+        <% end %>
+
+
+        chart.xAxisTickValues(x_tick_values);
+
+        // if (history_length > 20) {
+        //   ticks = 5;
+        // } else {
+        //   ticks = 6;
+        // }
+        // chart.xAxisTicks(ticks);
 
         d3.select('#chart-'+<%= idx %>)
           .datum([chart_data])
@@ -86,7 +123,7 @@
 
 </head>
 <body>
-  <h1>Gmail</h1>
+  <h1>Gmail for <%= @gmail_user_data["email"] %></h1>
 
   <% @mailboxes.each_with_index do |mb, idx| %>
     <h2><%= format_mailbox_name(mb[:name]) %> - <%= mb[:metric] %></h2>
