@@ -318,7 +318,7 @@ require 'lpgmail/store'
 
       @gmail_user_data = {
         "id"=>"123456789012345678901",
-        "email"=>"terry@example.com",
+        "email"=>"terry.t.brown@a-big-example.com",
         "verified_email"=>true,
         "hd"=>"example.com"
       }

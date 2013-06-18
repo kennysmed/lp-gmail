@@ -64,59 +64,58 @@
   <%= erb(:js_d3, :layout => false) %>
   <%= erb(:js_lpchart, :layout => false) %>
 
+  <%# We do different things depending on how much data we have: %>
+  <% days_of_data = @mailboxes[0][:history].length %>
   <script>
 
     window.onload = function() {
-      var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(120).yAxisTicks(4);
+      <% if days_of_data >= 3 %>
 
-      var chart_data;
+        var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(120).yAxisTicks(4);
 
-      // For every mailbox....
-      <% @mailboxes.each_with_index do |mb, idx| %>
-        chart_data = [];
+        var chart_data,
+            x_tick_values;
 
-        // Put all the dates and counts for this mailbox into chart_data.
-        <% mb[:history].each do |date, num| %>
-          chart_data.push(['<%= format_date(date) %>', <%= num %>]);
-        <% end %>
+        // For every mailbox....
+        <% @mailboxes.each_with_index do |mb, idx| %>
+          chart_data = [];
 
-        // We don't want to leave the generation of x-axis labels to d3 as
-        // they're sometimes a bit too sparse or crowded.
-        <% if mb[:history].length <= 6 %>
-          <% divisor = 1 %>
-        <% elsif mb[:history].length <= 12 %>
-          <% divisor = 2 %>
-        <% elsif mb[:history].length <= 18 %>
-          <% divisor = 3 %>
-        <% elsif mb[:history].length <= 24 %>
-          <% divisor = 4 %>
-        <% else %>
-          <% divisor = 5 %>
-        <% end %>
-
-        x_tick_values = [];
-        // Loop backwards, so we always have a label on the most recent point.
-        <% counter = 0 %>
-        <% mb[:history].reverse.each do |date, num| %>
-          <% if counter % divisor == 0 %>
-            x_tick_values.push('<%= format_date(date) %>');
+          // Put all the dates and counts for this mailbox into chart_data.
+          <% mb[:history].each do |date, num| %>
+            chart_data.push(['<%= format_date(date) %>', <%= num %>]);
           <% end %>
-          <% counter += 1 %>
+
+          // We don't want to leave the generation of x-axis labels to d3 as
+          // they're sometimes a bit too sparse or crowded.
+          <% if mb[:history].length <= 6 %>
+            <% divisor = 1 %>
+          <% elsif mb[:history].length <= 12 %>
+            <% divisor = 2 %>
+          <% elsif mb[:history].length <= 18 %>
+            <% divisor = 3 %>
+          <% elsif mb[:history].length <= 24 %>
+            <% divisor = 4 %>
+          <% else %>
+            <% divisor = 5 %>
+          <% end %>
+
+          x_tick_values = [];
+          // Loop backwards, so we always have a label on the most recent point.
+          <% counter = 0 %>
+          <% mb[:history].reverse.each do |date, num| %>
+            <% if counter % divisor == 0 %>
+              x_tick_values.push('<%= format_date(date) %>');
+            <% end %>
+            <% counter += 1 %>
+          <% end %>
+
+          chart.xAxisTickValues(x_tick_values);
+
+          d3.select('#chart-'+<%= idx %>)
+            .datum([chart_data])
+            .call(chart);
         <% end %>
 
-
-        chart.xAxisTickValues(x_tick_values);
-
-        // if (history_length > 20) {
-        //   ticks = 5;
-        // } else {
-        //   ticks = 6;
-        // }
-        // chart.xAxisTicks(ticks);
-
-        d3.select('#chart-'+<%= idx %>)
-          .datum([chart_data])
-          .call(chart);
       <% end %>
     };
   </script>
@@ -125,11 +124,27 @@
 <body>
   <h1>Gmail for <%= @gmail_user_data["email"] %></h1>
 
+  <% if days_of_data <= 1 %>
+    <p>There’s only one day’s worth of data so far. In a couple of days we
+      can start charting it…</p>
+
+  <% elsif days_of_data == 2 %>
+    <p>Tomorrow we’ll have a chart of your Gmail data…</p>
+
+  <% elsif days_of_data == 3 %>
+    <% if @mailboxes.length == 1 %>
+      <p>Here’s your first chart. It’ll look more interesting as the days go by…</p>
+    <% else %>
+      <p>Here are your first charts. They’ll look more interesting as the days go by…</p>
+    <% end %>
+  <% end %>
+
   <% @mailboxes.each_with_index do |mb, idx| %>
     <h2><%= format_mailbox_name(mb[:name]) %> - <%= mb[:metric] %></h2>
 
-    <div id="chart-<%= idx %>" class='chart"'></div>
-
+    <% if days_of_data >= 3 %>
+      <div id="chart-<%= idx %>" class='chart"'></div>
+    <% end %>
   <% end %>
 
 </body>
