@@ -2,6 +2,7 @@ source 'https://rubygems.org'
 ruby '1.9.3'
 
 gem 'gmail_xoauth'
+gem 'json'
 gem 'oauth2'
 gem 'redis'
 gem 'redis-namespace'

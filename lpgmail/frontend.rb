@@ -1,4 +1,5 @@
 # coding: utf-8
+require 'json'
 require 'sinatra/base'
 require 'sinatra/config_file'
 require 'lpgmail/gmail'
@@ -91,48 +92,22 @@ require 'lpgmail/store'
         end
       end
 
-      # Fetch data about an individual Gmail mailbox.
-      # `mailbox` is the name of the mailbox, eg 'INBOX', '[Gmail]/Important'.
-      # Returns a hash of information.
-      # def get_mailbox_data(imap, mailbox)
-      #   data = {}
-
-      #   # We could also use 'RECENT', but Gmail's IMAP implementation
-      #   # doesn't support that.
-      #   # https://support.google.com/mail/answer/78761?hl=en
-      #   mailbox_status = imap.status(mailbox, ['MESSAGES', 'UNSEEN'])
-
-      #   data[:all_count] = mailbox_status['MESSAGES']
-      #   data[:unseen_count] = mailbox_status['UNSEEN']
-
-      #   begin
-      #     imap.examine(mailbox)
-      #   rescue => error
-      #     halt 500, "Error examining #{mailbox}: #{error}"
-      #   end
-
-      #   begin
-      #     data[:flagged_count] = imap.search(['FLAGGED']).length
-      #   rescue => error
-      #     halt 500, "Error counting flagged in #{mailbox}: #{error}"
-      #   end
-
-      #   time_since = Time.now - (86400 * 1)
-      #   begin
-      #     data[:recent_count] = imap.search(['SINCE', time_since]).length
-      #   rescue => error
-      #     halt 500, "Error counting recent in #{mailbox}: #{error}"
-      #   end
-
-      #   return data
-      # end
-
       def default_metric()
         settings.valid_mailbox_metrics.keys[0]
       end
 
       def format_title()
         "Gmail Little Printer Publication"
+      end
+
+      # Strips the '[GMAIL]/' bit from mailbox names and adds spaces after
+      # remaining slashes.
+      # Passed '[GMAIL]/Important' it returns 'Important'.
+      # Passed 'Inbox' it returns 'Inbox'.
+      # Passed 'Project/Folder/Mailbox' it returns 'Project/ Folder/ Mailbox'.
+      def format_mailbox_name(name)
+        name = name.sub(%r{^(\[Gmail\]/)?(.*?)$}, "\\2")
+        name.gsub(/\//, "/ ")
       end
     end
 
@@ -332,6 +307,16 @@ require 'lpgmail/store'
 
 
     get '/sample/' do
+
+      @mailboxes = JSON.parse( IO.read(Dir.pwd + '/public/sample_mailboxes.json') )
+
+      # Turn all the keys (which are strings) into symbols:
+      @mailboxes.each_with_index do |mb, i|
+        @mailboxes[i].keys.each do |key|
+          @mailboxes[i][(key.to_sym rescue key) || key] = @mailboxes[i].delete(key)
+        end
+      end
+
       etag Digest::MD5.hexdigest('sample' + Date.today.strftime('%d%m%Y'))
       erb :publication
     end

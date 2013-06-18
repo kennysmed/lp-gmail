@@ -25,7 +25,7 @@
     */
     .line {
       fill: none;
-      stroke-width: 1px;
+      stroke-width: 2px;
       stroke: #000;
       shape-rendering: crispEdges;
     }
@@ -62,7 +62,7 @@
 
   <script>
     window.onload = function() {
-      var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(180);
+      var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(120).yAxisTicks(4).xAxisTicks(6);
 
       var chart_data;
 
@@ -89,7 +89,7 @@
   <h1>Gmail</h1>
 
   <% @mailboxes.each_with_index do |mb, idx| %>
-    <h2><%= mb[:name] %> - <%= mb[:metric] %></h2>
+    <h2><%= format_mailbox_name(mb[:name]) %> - <%= mb[:metric] %></h2>
 
     <div id="chart-<%= idx %>" class='chart"'></div>
 
