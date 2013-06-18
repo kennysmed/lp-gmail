@@ -14,21 +14,87 @@
       font-family: Arial, sans-serif;
       font-size: 20px;
     }
+
+    /************************************************************************/
+    /* Default styles for LPChart. */
+
+    /*
+    These are the defaults for lines drawn on the chart.
+    Each line will also have a unique class like .line-1 or .line-2, numbered
+    sequentially from 1.
+    */
+    .line {
+      fill: none;
+      stroke-width: 1px;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    /*
+    The styles below apply to both x and y axes. Each also has its own class,
+    either .axis-x or .axis-y */
+
+    /* The labels on an axis. */
+    .axis text {
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+    }
+    /* The single main line showing an axis. */
+    .axis path {
+      stroke: #000;
+      stroke-width: 1px;
+      shape-rendering: crispEdges;
+    }
+    /* The tick marks or grid lines for an axis. */
+    .axis .tick line {
+      stroke: #000;
+      stroke-width: 1px;
+      shape-rendering: crispEdges;
+    }
+    /* End default LPChart styles. */
+    /************************************************************************/
+
   </style>
+
+  <%# Include the d3 JS so that it renders inline. The BERG Cloud renderer seems to have problems when JS files are included as scripts. %>
+  <%= erb(:js_d3, :layout => false) %>
+  <%= erb(:js_lpchart, :layout => false) %>
+
+  <script>
+    window.onload = function() {
+      var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(180);
+
+      var chart_data;
+
+      <% @mailboxes.each_with_index do |mb, idx| %>
+        chart_data = [];
+
+        <% mb[:history].each do |date, num| %>
+          chart_data.push([
+            // Will be like '2013-12-31':
+            '<%= date.to_s[0, 4] %>-<%= date.to_s[4, 2] %>-<%= date.to_s[6, 2] %>',
+            <%= num %>
+          ]);
+        <% end %>
+
+        d3.select('#chart-'+<%= idx %>)
+          .datum([chart_data])
+          .call(chart);
+      <% end %>
+
+
+
+    };
+  </script>
 
 </head>
 <body>
   <h1>Gmail</h1>
 
-  <% @mailboxes.each do |mb| %>
+  <% @mailboxes.each_with_index do |mb, idx| %>
     <h2><%= mb[:name] %> - <%= mb[:metric] %></h2>
 
-    <p>
-      <% mb[:history].each do |num| %>
-        <%= num %>
-      <% end %>
-    </p>
-
+    <div id="chart-<%= idx %>" class='chart"'></div>
 
   <% end %>
 
