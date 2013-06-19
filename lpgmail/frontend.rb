@@ -109,19 +109,23 @@ require 'lpgmail/store'
         end
       end
 
-      # Strips the '[GMAIL]/' bit from mailbox names and adds spaces after
-      # remaining slashes.
+      # Strips the '[GMAIL]/' bit from mailbox names and adds zero-width spaces
+      # after remaining slashes.
       # Passed '[GMAIL]/Important' it returns 'Important'.
       # Passed 'Inbox' it returns 'Inbox'.
       # Passed 'Project/Folder/Mailbox' it returns 'Project/ Folder/ Mailbox'.
       def format_mailbox_name(name)
         name = name.sub(%r{^(\[Gmail\]/)?(.*?)$}, "\\2")
-        name.gsub(/\//, "/ ")
+        name.gsub(/\//, "/&#8203;")
       end
 
       # Just takes a YYYYMMDD format date and makes it into YYYY-MM-DD.
       def format_date(date)
         date.to_s[0, 4] + '-' + date.to_s[4, 2] + '-' + date.to_s[6, 2] 
+      end
+
+      def format_number(num)
+        num.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
       end
     end
 
@@ -327,7 +331,7 @@ require 'lpgmail/store'
 
       @gmail_user_data = {
         "id"=>"123456789012345678901",
-        "email"=>"terry.t.brown@a-big-example.com",
+        "email"=>"terry.t.brown@example.com",
         "verified_email"=>true,
         "hd"=>"example.com"
       }

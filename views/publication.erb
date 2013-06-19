@@ -58,7 +58,7 @@
       stroke-width: 4px;
     }
     
-    h1, h2, h3, p {
+    h1, p {
       margin: 0;
       padding: 0;
     }
@@ -67,37 +67,62 @@
     }
     .container {
       margin-top: 10px;
+    }
+
+    header,
+    footer {
+      padding: 10px;
       border-top: 5px solid #000;
-      padding-bottom: 5px;
       border-bottom: 5px solid #000;
+      margin-bottom: 20px;
+    }
+    footer.empty {
+      padding: 0;
+      border-top: 0;
+    }
+    header {
+      margin-bottom: 10px;
+    }
+      h1 {
+        font-size: 24px;
+        line-height: 26px;
+        font-weight: normal;
+      } 
+        h1 strong {
+          font-family: Arial Black, sans-serif;
+        }
+    p.intro {
+      padding: 0 10px;
       margin-bottom: 10px;
     }
 
-    h1 {
-      font-size: 24px;
-      padding: 10px;
-    } 
-    h2 {
-      font-size: 20px;
-      background: #000;
-      color: #fff;
-      padding: 5px 10px;   
-      margin-bottom: 5px;
+    .mb {
+      margin-bottom: 20px;
     }
-    h3 {
-      padding: 5px 10px;
-      margin-bottom: 10px;
-      font-size: 20px;
-      font-weight: normal;
-    }
-    p {
-      border-top: 5px solid #000;
-      padding: 10px 10px;
-      line-height: 1.3em;
-    }
-    .chart {
-      margin: 0 0 20px 10px;
-    }
+      .mb-num {
+        background: #000;
+        color: #fff;
+        font-size: 48px;
+        font-family: Arial Black, sans-serif;
+        line-height: 1em;
+        padding: 10px 17px 14px 12px;
+        display: inline-block;
+        vertical-align: top;
+        margin-right: 5px;
+      }
+      .mb-desc {
+        display: inline-block;
+        padding-top: 12px;
+        line-height: 23px;
+      }
+        .mb-metric {
+          font-family: Arial Black, sans-serif;
+          font-size: 24px;
+        }
+      .chart {
+        border-bottom: 1px solid #000;
+        line-height: 1px;
+      }
 
   </style>
 
@@ -110,9 +135,23 @@
   <script>
 
     window.onload = function() {
+
+      // Make the mailbox descriptions as wide as we can, while allowing space
+      // for the mailbox message number blocks (which vary in width).
+      Array.prototype.forEach.call(document.getElementsByClassName('mb-num'), function(el, n) {
+        var w = document.body.clientWidth - el.offsetWidth - 11;
+        document.getElementsByClassName('mb-desc-'+n)[0].setAttribute('style', 'width:'+w+'px');
+      });
+
+
+      <%# We only show the charts on the third day of data %>
       <% if days_of_data >= 3 %>
 
-        var chart = LPChart().xAxisType('date').showYAxisGrid(true).height(120).yAxisTicks(4);
+        var chart = LPChart().xAxisType('date')
+                             .height(80)
+                             .fill(true)
+                             .showXAxis(false)
+                             .showYAxis(false);
 
         var chart_data,
             x_tick_values;
@@ -164,33 +203,47 @@
 </head>
 <body>
   <div class="container">
-    <h1>Gmail stats for <span class="email"><%= @gmail_user_data["email"] %></span></h1>
+    <header>
+      <h1><strong>GMAIL STATS</strong> for <span class="email"><%= @gmail_user_data["email"] %></span></h1>
+    </header>
 
 
     <% if days_of_data <= 1 %>
-      <p>There’s only one day’s worth of data so far. In a couple of days we
+      <p class="intro">There’s only one day’s worth of data so far. In a couple of days we
         can start charting it…</p>
 
     <% elsif days_of_data == 2 %>
-      <p>Tomorrow we’ll have a chart of your Gmail data…</p>
+      <p class="intro">Tomorrow we’ll have a chart of your Gmail data…</p>
 
     <% elsif days_of_data == 3 %>
       <% if @mailboxes.length == 1 %>
-        <p>Here’s your first chart. It’ll look more interesting as the days go by…</p>
+        <p class="intro">Here’s your first chart. It’ll look more interesting as the days go by…</p>
       <% else %>
-        <p>Here are your first charts. They’ll look more interesting as the days go by…</p>
+        <p class="intro">Here are your first charts. They’ll look more interesting as the days go by…</p>
       <% end %>
     <% end %>
 
 
     <% @mailboxes.each_with_index do |mb, idx| %>
-      <h2><%= format_mailbox_name(mb[:name]) %></h2>
-      <h3><strong><%= mb[:metric].capitalize %> now: <%= pluralize(mb[:count], '</strong> message') %></h3>
 
-      <% if days_of_data >= 3 %>
-        <div id="chart-<%= idx %>" class="chart"></div>
-      <% end %>
+      <div class="mb">
+        <p class="mb-num mb-num-<%= idx %>"><%= format_number(mb[:count]) %></p>
+        <p class="mb-desc mb-desc-<%= idx %>">
+          <span class="mb-metric"><% if mb[:metric] == 'daily' %>FROM TODAY<% else %><%= mb[:metric].upcase %><% end %></span> now in <br />
+          <span class="mb-name"><%= format_mailbox_name(mb[:name]) %></span>
+        </p>
+
+        <% if days_of_data >= 3 %>
+          <div id="chart-<%= idx %>" class="chart"></div>
+        <% end %>
+      </div>
     <% end %>
+
+      <footer <% if days_of_data < 3 %>class="empty"<% end %>>
+        <% if days_of_data >= 3 %>
+          <p>Charts show <%= pluralize(days_of_data, 'day') %> of data</p>
+        <% end %>
+      </footer>
   </div>
 
 </body>
