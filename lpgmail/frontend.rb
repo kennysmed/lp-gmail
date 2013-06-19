@@ -124,9 +124,21 @@ require 'lpgmail/store'
         date.to_s[0, 4] + '-' + date.to_s[4, 2] + '-' + date.to_s[6, 2] 
       end
 
+      # Add commas in long numbers.
       def format_number(num)
         num.to_s.reverse.gsub(/...(?=.)/,'\&,').reverse
       end
+
+      # In the publication we display some of the metrics differently.
+      def format_metric(metric)
+        if metric == 'daily'
+          "from today"
+        elsif metric == 'flagged'
+          "starred"
+        else
+          metric
+        end
+      end 
     end
 
 
