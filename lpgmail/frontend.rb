@@ -220,8 +220,6 @@ require 'lpgmail/store'
       gmail_login(session[:refresh_token])
 
       @email = gmail.user_data['email']
-      p "USER DATA:"
-      p gmail.user_data
       @mailboxes = gmail.get_mailboxes
       p "MAILBOXES:"
       p @mailboxes
@@ -247,7 +245,8 @@ require 'lpgmail/store'
       # We also use settings.valid_mailbox_metrics.
       valid_mailbox_names = []
       mailboxes.each do |mb|
-        unless mb.attr.include?(:Noselect)
+        # Occasionally we get a nil mailbox. Odd.
+        unless mb.nil? or mb.attr.include?(:Noselect)
           valid_mailbox_names << mb.name
         end
       end

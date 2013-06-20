@@ -105,10 +105,8 @@
                 <option value="">Select a mailbox…</option>
                 <% @mailboxes.each do |mb| %>
                   <%# There's an occasional `nil` mailbox. Odd. %>
-                  <% unless mb.nil? %>
-                    <% unless mb.attr.include?(:Noselect) %>
-                      <option value="<%= mb.name %>"<% if @form_values["mailbox-#{m}"] && @form_values["mailbox-#{m}"] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
-                    <% end %>
+                  <% unless mb.nil? or mb.attr.include?(:Noselect) %>
+                    <option value="<%= mb.name %>"<% if @form_values["mailbox-#{m}"] && @form_values["mailbox-#{m}"] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
                   <% end %>
                 <% end %> 
               </select>
