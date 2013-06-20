@@ -223,6 +223,8 @@ require 'lpgmail/store'
       p "USER DATA:"
       p gmail.user_data
       @mailboxes = gmail.get_mailboxes
+      p "MAILBOXES:"
+      p @mailboxes
 
       gmail.imap_disconnect
 
