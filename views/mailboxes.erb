@@ -95,14 +95,38 @@
 
       <% else %>
 
-        <% @mailboxes.each do |mb| %>
-          <% if mb.nil? %>
-            No: <%= mb %><br />
-          <% else %>
-            Yes: <%= mb.name %><br />
+        <ul class="config-mailboxes">
+          <% for m in 1..settings.max_mailboxes %>
+            <li class="config-mailbox">
+              <% if @form_errors.has_key?("mailbox-#{m}") %>
+                <p class="config-error"><%= @form_errors["mailbox-#{m}"] %></p>
+              <% end %>
+              <select name="mailbox-<%= m %>" data-metric-element="config-mailbox-metrics-<%= m %>">
+                <option value="">Select a mailbox…</option>
+                <% @mailboxes.each do |mb| %>
+                  <%# There's an occasional `nil` mailbox. Odd. %>
+                  <% unless mb.nil? %>
+                    <% unless mb.attr.include?(:Noselect) %>
+                      <option value="<%= mb.name %>"<% if @form_values["mailbox-#{m}"] && @form_values["mailbox-#{m}"] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
+                    <% end %>
+                  <% end %>
+                <% end %> 
+              </select>
+              <p class="config-mailbox-metrics" id="config-mailbox-metrics-<%= m %>">
+                <% settings.valid_mailbox_metrics.each_pair do |key, label| %>
+                  <span class="config-mailbox-metric">
+                    <input type="radio" name="metric-<%= m %>" value="<%= key %>" id="metric-<%= m %>-<%= key %>"<% if @form_values["metric-#{m}"] == key %> checked="checked"<% end %>>
+                    <label for="metric-<%= m %>-<%= key %>"><%= label %></label>&nbsp;&nbsp;
+                  </span>
+                <% end %>
+              </p>
+            </li>
           <% end %>
-        <% end %>
+        </ul>
 
+  		  <p class="config-submit">
+  		    <input type="submit" value="Submit" class="config-submit-button" />
+  		  </p>
 
       <% end %>
 		</form>
