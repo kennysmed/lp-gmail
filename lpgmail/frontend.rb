@@ -51,7 +51,7 @@ require 'lpgmail/store'
         'total' => 'Total',
         'unread' => 'Unread',
         'flagged' => 'Starred',
-        'daily' => 'Received per day'
+        'daily' => 'Last 24 hours'
       }
 
       if settings.development?
