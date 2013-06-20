@@ -115,7 +115,8 @@ module LpGmail
     def get_mailboxes()
       begin
         mblist = @imap_client.list('', '*')
-      rescue
+      rescue => error
+        p "ERROR getting mailboxes: #{error}"
         return [] 
       end
 

@@ -90,35 +90,42 @@
         <p class="config-error"><%= @form_errors['general'] %></p>
       <% end %>
 
-      <ul class="config-mailboxes">
-        <% for m in 1..settings.max_mailboxes %>
-          <li class="config-mailbox">
-            <% if @form_errors.has_key?("mailbox-#{m}") %>
-              <p class="config-error"><%= @form_errors["mailbox-#{m}"] %></p>
-            <% end %>
-            <select name="mailbox-<%= m %>" data-metric-element="config-mailbox-metrics-<%= m %>">
-              <option value="">Select a mailbox…</option>
-              <% @mailboxes.each do |mb| %>
-                <% unless mb.attr.include?(:Noselect) %>
-                  <option value="<%= mb.name %>"<% if @form_values["mailbox-#{m}"] && @form_values["mailbox-#{m}"] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
-                <% end %>
-              <% end %> 
-            </select>
-            <p class="config-mailbox-metrics" id="config-mailbox-metrics-<%= m %>">
-              <% settings.valid_mailbox_metrics.each_pair do |key, label| %>
-                <span class="config-mailbox-metric">
-                  <input type="radio" name="metric-<%= m %>" value="<%= key %>" id="metric-<%= m %>-<%= key %>"<% if @form_values["metric-#{m}"] == key %> checked="checked"<% end %>>
-                  <label for="metric-<%= m %>-<%= key %>"><%= label %></label>&nbsp;&nbsp;
-                </span>
-              <% end %>
-            </p>
-          </li>
-        <% end %>
-      </ul>
+      <% if @mailboxes.length == 0 %>
+        <p class="config-error">Sorry, something went wrong fetching the list of mailboxes from Gmail.</p>
 
-		  <p class="config-submit">
-		    <input type="submit" value="Submit" class="config-submit-button" />
-		  </p>
+      <% else %>
+
+        <ul class="config-mailboxes">
+          <% for m in 1..settings.max_mailboxes %>
+            <li class="config-mailbox">
+              <% if @form_errors.has_key?("mailbox-#{m}") %>
+                <p class="config-error"><%= @form_errors["mailbox-#{m}"] %></p>
+              <% end %>
+              <select name="mailbox-<%= m %>" data-metric-element="config-mailbox-metrics-<%= m %>">
+                <option value="">Select a mailbox…</option>
+                <% @mailboxes.each do |mb| %>
+                  <% unless mb.attr.include?(:Noselect) %>
+                    <option value="<%= mb.name %>"<% if @form_values["mailbox-#{m}"] && @form_values["mailbox-#{m}"] == mb.name %> selected="selected"<% end %>><%= mb.name %></option>
+                  <% end %>
+                <% end %> 
+              </select>
+              <p class="config-mailbox-metrics" id="config-mailbox-metrics-<%= m %>">
+                <% settings.valid_mailbox_metrics.each_pair do |key, label| %>
+                  <span class="config-mailbox-metric">
+                    <input type="radio" name="metric-<%= m %>" value="<%= key %>" id="metric-<%= m %>-<%= key %>"<% if @form_values["metric-#{m}"] == key %> checked="checked"<% end %>>
+                    <label for="metric-<%= m %>-<%= key %>"><%= label %></label>&nbsp;&nbsp;
+                  </span>
+                <% end %>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+
+  		  <p class="config-submit">
+  		    <input type="submit" value="Submit" class="config-submit-button" />
+  		  </p>
+        
+      <% end %>
 		</form>
 
 

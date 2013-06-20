@@ -187,6 +187,8 @@ require 'lpgmail/store'
       # We'll use this in the next stage when checking their email address.
       session[:access_token] = gmail.access_token
 
+      p "REFRESH TOKEN: #{gmail.refresh_token}"
+
       gmail.imap_disconnect
 
       # Now choose the mailboxes.
@@ -218,6 +220,8 @@ require 'lpgmail/store'
       gmail_login(session[:refresh_token])
 
       @email = gmail.user_data['email']
+      p "USER DATA:"
+      p gmail.user_data
       @mailboxes = gmail.get_mailboxes
 
       gmail.imap_disconnect
