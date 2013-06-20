@@ -96,11 +96,10 @@
       <% else %>
 
         <% @mailboxes.each do |mb| %>
-          <% if mb.method_defined? :attr %>
-            Yes: <%= mb.name %><br />
-
-          <% else %>
+          <% if mb.nil? %>
             No: <%= mb %><br />
+          <% else %>
+            Yes: <%= mb.name %><br />
           <% end %>
         <% end %>
 
