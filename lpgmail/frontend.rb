@@ -330,7 +330,7 @@ require 'lpgmail/store'
 
       gmail.imap_disconnect
 
-      puts "Data about #{mailboxes.length} mailbox(es) for #{id}"
+      puts "Data about #{@mailboxes.length} mailbox(es) for #{id}"
 
       # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:
