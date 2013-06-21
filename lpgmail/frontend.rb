@@ -142,6 +142,12 @@ require 'lpgmail/store'
     end
 
 
+    error 400..500 do
+      @message = body[0]
+      erb :error, :layout => :layout_config
+    end
+
+
     get '/favicon.ico' do
       status 410
     end
@@ -222,7 +228,7 @@ require 'lpgmail/store'
 
       gmail.imap_disconnect
 
-      erb :mailboxes
+      erb :mailboxes, :layout => :layout_config
     end
 
 

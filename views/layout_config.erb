@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title><%= format_title %></title>
+  <style type="text/css">
+    body {
+      background: #F8F6F3;
+      color: #000;
+      font-family: Helvetica, Arial, sans-serif;
+      margin: 10px;
+      font-size: 16px;
+    }
+    ul, li {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+    }
+    p,
+    .config-mailbox {
+    	margin: 0 0 1em 0;
+    	line-height: 21px;
+    }
+    .container {
+      border: 1px solid #E8E6E3;
+      background: #fff;
+      padding: 1em 20px;
+      max-width: 416px;
+      margin: 0 auto;
+    }
+    .config-title {
+      margin: 0 0 0.5em 0;
+      font-size: 1.5em;
+    }
+    .config-intro {
+      font-weight: bold;
+      margin: 1em 0;
+      line-height: 1.3em;
+    }
+    .config-error {
+      color: #900;
+    }
+    .config-mailboxes {
+      border-bottom: 1px solid #E8E6E3;
+      margin-bottom: 1em;
+    }
+      .config-mailbox {
+        border-top: 1px solid #E8E6E3;
+        padding-top: 1em;
+        margin-bottom: 1em;
+      }
+        select {
+          font-size: 1em;
+        }
+        .config-mailbox-metrics {
+          margin-top: 0.3em;
+          margin-bottom: 0;
+        }
+          .config-mailbox-metric {
+            white-space: nowrap;
+          }
+    .config-submit-button {
+      background: #FED84D;
+      border: 1px solid #EEC83D;
+      color: #000;
+      font-family: Helvetica, Arial, sans-serif;
+      font-size: 1em;
+      font-weight: bold;
+      padding: 0.5em 10px;
+      margin-right: 15px;
+    }
+    .config-submit-button:hover {
+      background: #FCCA2E;
+      cursor: pointer;
+    }
+
+    .error-title {
+      margin: 0;
+    }
+    .error-msg {
+      line-height: 1.4em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <%= yield %>
+
+  </div> <!-- .container -->
+
+</body>
+</html>
