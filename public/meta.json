@@ -1,8 +1,8 @@
 {
     "owner_email" : "publishers@bergcloud.com",
     "publication_api_version":"1.0",
-    "name": "Gmail",
-    "description": "DESCRIPTION TO DO",
+    "name": "Gmail Stats",
+    "description": "See graphs of your Gmail data over 30 days: Inbox, Starred, unread, and more.",
     "delivered_on": "every day",
     "delivery_type": "fetch",
     "send_timezone_info": false,
