@@ -301,7 +301,7 @@ require 'lpgmail/store'
 
     get '/edition/' do
       id = params[:id]
-      puts "Edition for #{id}"
+      puts "Starting edition for #{id}"
 
       # Will have :refresh_token and :mailboxes keys.
       user = user_store.get(id)
@@ -329,6 +329,8 @@ require 'lpgmail/store'
       end
 
       gmail.imap_disconnect
+
+      puts "Data about #{mailboxes.length} mailbox(es) for #{id}"
 
       # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:
