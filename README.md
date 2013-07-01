@@ -20,7 +20,7 @@ This publication is an example of:
 ## Set-up
 
 The app has only been run on [Heroku](http://heroku.com/), using the [Redis
-Cloud add-on](https://addons.heroku.com/rediscloud). Set up a new App, with
+Cloud add-on](https://addons.heroku.com/rediscloud). Set up a new Heroku App, with
 that add-on.
 
 You will need to get a Google API ID and Secret from their [APIs Console](https://code.google.com/apis/console#access):
@@ -40,7 +40,7 @@ You will need to get a Google API ID and Secret from their [APIs Console](https:
 If you want to run the code in other places, such as a local development
 server, you can create further Client IDs within the same Google API project.
 
-The client ID and secret (and the Redis Cloud URL) can be provided as environment variables, which is the way to do it when running on Heroku, for example:
+The client ID and secret (and the Redis Cloud URL) can be provided as environment variables, which is, for example, the way to do it when running on Heroku.
 
     GOOGLE_CLIENT_ID=12345678901.apps.googleusercontent.com
     GOOGLE_CLIENT_SECRET=ABc-1234567890abcdefghij
