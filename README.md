@@ -32,7 +32,7 @@ You will need to get a Google API ID and Secret from their [APIs Console](https:
    http://remote.bergcloud.com/
 4. On the next page, select the 'Web application' type. Click the 'more
    options' link. For 'Authorized Redirect URIs' enter something like
-   `http://my-gmail-pub.herokuapp.com/return`, using your Heroku app's domain.
+   `http://my-gmail-pub.herokuapp.com/return/`, using your Heroku app's domain.
    You can delete the 'Authorized JavaScript Origins'. Submit the form.
 5. You'll need the 'Client ID' and the 'Client secret' displayed on the next
    page. 
