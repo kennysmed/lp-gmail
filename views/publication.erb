@@ -107,7 +107,7 @@
         display: inline-block;
         vertical-align: top;
         margin-right: 5px;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
       }
       .mb-desc {
         display: inline-block;
@@ -119,7 +119,6 @@
           font-size: 24px;
         }
       .chart {
-        border-bottom: 1px solid #000;
         line-height: 1px;
       }
 
@@ -150,7 +149,10 @@
                              .height(80)
                              .fill(true)
                              .showXAxis(false)
-                             .showYAxis(false);
+							 .showYAxis(true)
+							 .yAxisTicks(3)
+							 .showYAxisGrid(true)
+							 .yAxisMin('min');
 
         var chart_data,
             x_tick_values;
