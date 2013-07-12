@@ -132,7 +132,7 @@ require 'lpgmail/store'
       # In the publication we display some of the metrics differently.
       def format_metric(metric)
         if metric == 'daily'
-          "in past 24 hours"
+          "from past 24 hrs"
         elsif metric == 'flagged'
           "starred"
         else
