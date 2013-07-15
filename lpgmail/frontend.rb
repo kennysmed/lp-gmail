@@ -313,7 +313,8 @@ require 'lpgmail/store'
       user = user_store.get(id)
 
       if !user
-        return 500, "No data found for ID '#{id}'"
+        puts "No user data found for ID '#{id}'"
+        return 500, "No user data found for ID '#{id}'"
       end
 
       gmail_login(user[:refresh_token])
@@ -338,9 +339,9 @@ require 'lpgmail/store'
 
       puts "Data about #{@mailboxes.length} mailbox(es) for #{id}"
 
-      # etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
+      etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:
-      etag Digest::MD5.hexdigest(id + Time.now.strftime('%M%H-%d%m%Y'))
+      #etag Digest::MD5.hexdigest(id + Time.now.strftime('%M%H-%d%m%Y'))
       erb :publication
     end
 
