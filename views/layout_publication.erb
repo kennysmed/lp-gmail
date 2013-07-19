@@ -129,8 +129,6 @@
 	  <%= erb(:js_d3, :layout => false) %>
 	  <%= erb(:js_lpchart, :layout => false) %>
 
-	  <%# We do different things depending on how much data we have: %>
-	  <% @days_of_data = @mailboxes[0][:history].length %>
 	  <script>
 
 		window.onload = function() {

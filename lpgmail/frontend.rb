@@ -359,7 +359,7 @@ require 'lpgmail/store'
 
       # Some weird thing with yield and scope means we should declare this
       # here, not just within the layout/template.
-      @days_of_data = 0
+      @days_of_data = @mailboxes[0][:history].length
 
       puts "Data about #{@mailboxes.length} mailbox(es) for #{id}"
 
@@ -398,7 +398,7 @@ require 'lpgmail/store'
 
       # Some weird thing with yield and scope means we should declare this
       # here, not just within the layout/template.
-      @days_of_data = 0
+      @days_of_data = @mailboxes[0][:history].length
 
       etag Digest::MD5.hexdigest('sample' + Date.today.strftime('%d%m%Y'))
       erb :publication, :layout => :layout_publication
