@@ -87,7 +87,7 @@ require 'lpgmail/store'
           if error.code == 'invalid_grant'
             # This error usually means that the user has revoked access to
             # Gmail.
-            redirect url('/auth-revoked/'), 200
+            redirect to(url('/auth-revoked/')), 302
           else
             error_code = 500
             error_msg = "Error when trying to log in (1): #{error.code}"
