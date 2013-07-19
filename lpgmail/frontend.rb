@@ -84,11 +84,18 @@ require 'lpgmail/store'
         begin
           gmail.login(refresh_token)
         rescue OAuth2::Error => error
-          halt error.code.to_i, " Error when trying to log in (1): #{error.description}"
+          error_code = error.code.to_i
+          error_msg = "Error when trying to log in (1): #{error.description}"
         rescue Net::IMAP::ResponseError => error
-          halt 500, " Error when trying to log in (2): #{error}"
+          error_code = 500
+          error_msg = "Error when trying to log in (2): #{error}"
         rescue => error
-          halt 500, " Error when trying to log in (3): #{error}"
+          error_code = 500
+          error_msg = "Error when trying to log in (3): #{error}"
+        end
+        if error_code
+          p "ERROR: #{error_code}: #{error_msg}"
+          halt error_code, error_msg
         end
       end
 
@@ -176,6 +183,7 @@ require 'lpgmail/store'
         if sesssion[:bergcloud_error_url]
           redirect session[:bergcloud_error_url]
         else
+          p "ERROR: 500: No access token was returned by Google"
           return 500, "No access token was returned by Google"
         end
       end
@@ -183,9 +191,15 @@ require 'lpgmail/store'
       begin
         gmail.fetch_token(params[:code], url('/return/'))
       rescue OAuth2::Error => error
-        return error.code, "Error when trying to get an access token from Google (1a): #{error.description}"
+        error_code = error.code.to_i
+        error_msg = "Error when trying to get an access token from Google (1a): #{error.description}" 
       rescue => error
-        return 500, "Error when trying to get an access token from Google (1b): #{error}"
+        error_code = 500
+        error_msg = "Error when trying to get an access token from Google (1b): #{error}"
+      end
+      if error_code
+        p "ERROR: #{error_code}: #{error_msg}"
+        return error_code, error_msg
       end
 
       # Save this for now, as we'll save it in DB once we've finished.
@@ -313,7 +327,7 @@ require 'lpgmail/store'
       user = user_store.get(id)
 
       if !user
-        puts "No user data found for ID '#{id}'"
+        p "ERROR: 500: No user data found for ID '#{id}'"
         return 500, "No user data found for ID '#{id}'"
       end
 
