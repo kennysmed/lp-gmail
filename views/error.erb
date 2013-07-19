@@ -1,7 +1,13 @@
 
 <h1 class="error-title">Oops!</h1>
 
-<p class="error-msg"><%= @message %></p>
+<p class="error-msg">
+	<% if @message %>
+		<%= @message %>
+	<% else %>
+		Something went wrong, sorry.
+	<% end %>
+</p>
 
 <% if session[:bergcloud_error_url] %>
 	<p class="error-msg"><a href="<%= session[:bergcloud_error_url] %>">Return to BERG Cloud</a></p>
