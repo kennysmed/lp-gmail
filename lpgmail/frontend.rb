@@ -84,7 +84,12 @@ require 'lpgmail/store'
         begin
           gmail.login(refresh_token)
         rescue OAuth2::Error => error
-          halt error.code, " Error when trying to log in (1): #{error.description}"
+          error_code = 500
+          # This should be present, but isn't always:
+          if error.code
+            error_code = error.code
+          end
+          halt error_code, " Error when trying to log in (1): #{error.description}"
         rescue Net::IMAP::ResponseError => error
           halt 500, " Error when trying to log in (2): #{error}"
         rescue => error
