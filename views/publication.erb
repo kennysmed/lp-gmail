@@ -1,223 +1,12 @@
-<!DOCTYPE html>
-<meta charset="utf-8">
-<html>
-<head>
-  <title><%= format_title %></title>
 
-  <style type="text/css">
-    body {
-      background: #fff;
-      color: #000;
-      width: 384px;
-      padding: 0;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      font-size: 20px;
-    }
-
-    /************************************************************************/
-    /* Default styles for LPChart. */
-
-    /*
-    These are the defaults for lines drawn on the chart.
-    Each line will also have a unique class like .line-1 or .line-2, numbered
-    sequentially from 1.
-    */
-    .line {
-      fill: none;
-      stroke-width: 2px;
-      stroke: #000;
-      shape-rendering: crispEdges;
-    }
-
-    /*
-    The styles below apply to both x and y axes. Each also has its own class,
-    either .axis-x or .axis-y */
-
-    /* The labels on an axis. */
-    .axis text {
-      font-size: 14px;
-      font-family: Arial, sans-serif;
-    }
-    /* The single main line showing an axis. */
-    .axis path {
-      stroke: #000;
-      stroke-width: 1px;
-      shape-rendering: crispEdges;
-    }
-    /* The tick marks or grid lines for an axis. */
-    .axis .tick line {
-      stroke: #000;
-      stroke-width: 1px;
-      shape-rendering: crispEdges;
-    }
-    /* End default LPChart styles. */
-    /************************************************************************/
-
-    .line {
-      stroke-width: 4px;
-    }
-    
-    h1, p {
-      margin: 0;
-      padding: 0;
-    }
-    .email {
-      white-space: nowrap;
-    }
-    .container {
-      margin-top: 10px;
-    }
-
-    header,
-    footer {
-      padding: 10px;
-      border-top: 5px solid #000;
-      border-bottom: 5px solid #000;
-      margin-bottom: 20px;
-    }
-    footer.empty {
-      padding: 0;
-      border-top: 0;
-    }
-      h1 {
-        font-size: 24px;
-        line-height: 26px;
-        font-weight: normal;
-      } 
-        h1 strong {
-          font-family: Arial Black, sans-serif;
-        }
-    p.intro {
-      margin-top: -10px;
-      padding: 0 10px;
-      margin-bottom: 20px;
-    }
-
-    .mb {
-      margin-bottom: 20px;
-    }
-      .mb-num {
-        background: #000;
-        color: #fff;
-        font-size: 48px;
-        font-family: Arial Black, sans-serif;
-        line-height: 1em;
-        padding: 10px 17px 14px 12px;
-        display: inline-block;
-        vertical-align: top;
-        margin-right: 5px;
-        margin-bottom: 4px;
-      }
-      .mb-desc {
-        display: inline-block;
-        padding-top: 12px;
-        line-height: 23px;
-      }
-        .mb-metric {
-          font-family: Arial Black, sans-serif;
-          font-size: 24px;
-        }
-      .chart {
-        line-height: 1px;
-      }
-
-  </style>
-
-  <%# Include the d3 JS so that it renders inline. The BERG Cloud renderer seems to have problems when JS files are included as scripts. %>
-  <%= erb(:js_d3, :layout => false) %>
-  <%= erb(:js_lpchart, :layout => false) %>
-
-  <%# We do different things depending on how much data we have: %>
-  <% days_of_data = @mailboxes[0][:history].length %>
-  <script>
-
-    window.onload = function() {
-
-      // Make the mailbox descriptions as wide as we can, while allowing space
-      // for the mailbox message number blocks (which vary in width).
-      Array.prototype.forEach.call(document.getElementsByClassName('mb-num'), function(el, n) {
-        var w = document.body.clientWidth - el.offsetWidth - 11;
-        document.getElementsByClassName('mb-desc-'+n)[0].setAttribute('style', 'width:'+w+'px');
-      });
-
-
-      <%# We only show the charts on the third day of data %>
-      <% if days_of_data >= 3 %>
-
-        var chart = LPChart().xAxisType('date')
-                             .height(80)
-                             .fill(true)
-                             .showXAxis(false)
-							 .showYAxis(true)
-							 .yAxisTicks(3)
-							 .showYAxisGrid(true)
-							 .yAxisMin('min')
-							 .yAxisPosition('right');
-
-        var chart_data,
-            x_tick_values;
-
-        // For every mailbox....
-        <% @mailboxes.each_with_index do |mb, idx| %>
-          chart_data = [];
-
-          // Put all the dates and counts for this mailbox into chart_data.
-          <% mb[:history].each do |date, num| %>
-            chart_data.push(['<%= format_date(date) %>', <%= num %>]);
-          <% end %>
-
-          // We don't want to leave the generation of x-axis labels to d3 as
-          // they're sometimes a bit too sparse or crowded.
-          <% if mb[:history].length <= 6 %>
-            <% divisor = 1 %>
-          <% elsif mb[:history].length <= 12 %>
-            <% divisor = 2 %>
-          <% elsif mb[:history].length <= 18 %>
-            <% divisor = 3 %>
-          <% elsif mb[:history].length <= 24 %>
-            <% divisor = 4 %>
-          <% else %>
-            <% divisor = 5 %>
-          <% end %>
-
-          x_tick_values = [];
-          // Loop backwards, so we always have a label on the most recent point.
-          <% counter = 0 %>
-          <% mb[:history].reverse.each do |date, num| %>
-            <% if counter % divisor == 0 %>
-              x_tick_values.push('<%= format_date(date) %>');
-            <% end %>
-            <% counter += 1 %>
-          <% end %>
-
-          chart.xAxisTickValues(x_tick_values);
-
-          d3.select('#chart-'+<%= idx %>)
-            .datum([chart_data])
-            .call(chart);
-        <% end %>
-
-      <% end %>
-    };
-  </script>
-
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1><strong>GMAIL STATS</strong> for <span class="email"><%= @gmail_user_data["email"] %></span></h1>
-    </header>
-
-
-    <% if days_of_data <= 1 %>
+    <% if @days_of_data <= 1 %>
       <p class="intro">There’s only one day’s worth of data so far. In a couple of days we
         can start charting it…</p>
 
-    <% elsif days_of_data == 2 %>
+    <% elsif @days_of_data == 2 %>
       <p class="intro">Tomorrow we’ll have a chart of your Gmail data…</p>
 
-    <% elsif days_of_data == 3 %>
+    <% elsif @days_of_data == 3 %>
       <% if @mailboxes.length == 1 %>
         <p class="intro">Here’s your first chart. It’ll look more interesting as the days go by…</p>
       <% else %>
@@ -235,18 +24,15 @@
           <span class="mb-name"><%= format_mailbox_name(mb[:name]) %></span>
         </p>
 
-        <% if days_of_data >= 3 %>
+        <% if @days_of_data >= 3 %>
           <div id="chart-<%= idx %>" class="chart"></div>
         <% end %>
       </div>
     <% end %>
 
-      <footer <% if days_of_data < 3 %>class="empty"<% end %>>
-        <% if days_of_data >= 3 %>
-          <p>Charts show <%= pluralize(days_of_data, 'day') %> of data</p>
+      <footer <% if @days_of_data < 3 %>class="empty"<% end %>>
+        <% if @days_of_data >= 3 %>
+          <p>Charts show <%= pluralize(@days_of_data, 'day') %> of data</p>
         <% end %>
       </footer>
-  </div>
 
-</body>
-</html>

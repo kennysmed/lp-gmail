@@ -84,8 +84,14 @@ require 'lpgmail/store'
         begin
           gmail.login(refresh_token)
         rescue OAuth2::Error => error
-          error_code = 500
-          error_msg = "Error when trying to log in (1): #{error['error']}"
+          if error['error'] == 'invalid_grant'
+            # This error usually means that the user has revoked access to
+            # Gmail.
+            redirect url('/auth-revoked/'), 200
+          else
+            error_code = 500
+            error_msg = "Error when trying to log in (1): #{error['error']}"
+          end
         rescue Net::IMAP::ResponseError => error
           error_code = 500
           error_msg = "Error when trying to log in (2): #{error}"
@@ -351,12 +357,16 @@ require 'lpgmail/store'
 
       gmail.imap_disconnect
 
+      # Some weird thing with yield and scope means we should declare this
+      # here, not just within the layout/template.
+      @days_of_data = 0
+
       puts "Data about #{@mailboxes.length} mailbox(es) for #{id}"
 
       etag Digest::MD5.hexdigest(id + Date.today.strftime('%d%m%Y'))
       # Testing, always changing etag:
       #etag Digest::MD5.hexdigest(id + Time.now.strftime('%M%H-%d%m%Y'))
-      erb :publication
+      erb :publication, :layout => :layout_publication
     end
 
 
@@ -386,8 +396,20 @@ require 'lpgmail/store'
         end
       end
 
+      # Some weird thing with yield and scope means we should declare this
+      # here, not just within the layout/template.
+      @days_of_data = 0
+
       etag Digest::MD5.hexdigest('sample' + Date.today.strftime('%d%m%Y'))
-      erb :publication
+      erb :publication, :layout => :layout_publication
+    end
+
+
+    # The user gets this version of the publication if they've revoked
+    # authentication with Gmail. We want to tell them they should unsubscribe.
+    get '/auth-revoked/' do
+      etag Digest::MD5.hexdigest('auth-revoked' + Date.today.strftime('%d%m%Y'))
+      erb :auth_revoked, :layout => :layout_publication
     end
 
   end
