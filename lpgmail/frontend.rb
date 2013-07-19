@@ -86,6 +86,8 @@ require 'lpgmail/store'
         rescue OAuth2::Error => error
           p "ERROR"
           p error
+          p error.code
+          p error.description
           if error['error'] == 'invalid_grant'
             # This error usually means that the user has revoked access to
             # Gmail.
