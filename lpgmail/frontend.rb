@@ -86,8 +86,9 @@ require 'lpgmail/store'
         rescue OAuth2::Error => error
           error_code = 500
           # This should be present, but isn't always:
+          p "ERROR " + error.code
           if error.code
-            error_code = error.code
+            error_code = error.code.to_i
           end
           halt error_code, " Error when trying to log in (1): #{error.description}"
         rescue Net::IMAP::ResponseError => error
