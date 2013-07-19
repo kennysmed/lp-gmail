@@ -84,17 +84,13 @@ require 'lpgmail/store'
         begin
           gmail.login(refresh_token)
         rescue OAuth2::Error => error
-          p "ERROR"
-          p error
-          p error.code
-          p error.description
-          if error['error'] == 'invalid_grant'
+          if error.code == 'invalid_grant'
             # This error usually means that the user has revoked access to
             # Gmail.
             redirect url('/auth-revoked/'), 200
           else
             error_code = 500
-            error_msg = "Error when trying to log in (1): #{error['error']}"
+            error_msg = "Error when trying to log in (1): #{error.code}"
           end
         rescue Net::IMAP::ResponseError => error
           error_code = 500
