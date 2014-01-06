@@ -43,7 +43,9 @@ module LpGmail
       end
 
       def get(id)
+        p "HGET :user #{id}"
         if data = redis.hget(:user, id)
+          p "HGET SUCCESSFUL"
           Marshal.load(data)
         end
       end
@@ -120,6 +122,7 @@ module LpGmail
       def get(id, mailbox_name, metric)
         # Will result in an array of arrays, like:
         # [["20130112", "34"], ["20130509", "31"], ... ]
+        p "HGETALL #{id}:#{mailbox_name}:#{metric}"
         arr = redis.hgetall(make_key(id, mailbox_name, metric)).sort
         # Turn all those strings to ints.
         arr.map! { |d| [ d[0].to_i, d[1].to_i ] }
