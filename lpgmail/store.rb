@@ -1,23 +1,24 @@
 require 'date'
-require 'redis'
 require 'redis-namespace'
 require 'uuid'
 
 
 module LpGmail
   module Store
+    # Child classes should have a `namespace` method, used for the Redis
+    # namespace.
     class RedisBase
       attr_accessor :redis
 
-      def initialize(redis_url=nil)
-        if redis_url != nil
-          uri = URI.parse(redis_url)
-          redis = ::Redis.new(:host => uri.host, :port => uri.port,
-                                                    :password => uri.password)
-        else
-          redis = ::Redis.new
+      # Expects a Redis ConnectionPool object.
+      def initialize(redis_pool)
+        @redis_pool = redis_pool
+      end
+
+      def redis
+        @redis_pool.with do |r|
+          yield ::Redis::Namespace.new(namespace, :redis => r)
         end
-        @redis = ::Redis::Namespace.new(:lpgmail, :redis => redis)
       end
     end
 
@@ -31,38 +32,52 @@ module LpGmail
     #   {:name=>"Test parent/Another/Test", :metric=>"daily"}
     # ] 
     class User < RedisBase
+
+      def namespace
+        :lpgmail
+      end
+
       def store(refresh_token, mailboxes)
         id = UUID.generate
-        redis.hset(:user, id, Marshal.dump({:refresh_token => refresh_token,
+        p "HSET :user #{id}"
+        redis do |r|
+          r.hset(:user, id, Marshal.dump({:refresh_token => refresh_token,
                                             :mailboxes => mailboxes}))
+        end
         return id
       end
 
       def del(id)
-        redis.hdel(:user, id)
+        redis do |r|
+          r.hdel(:user, id)
+        end
       end
 
       def get(id)
         p "HGET :user #{id}"
-        if data = redis.hget(:user, id)
-          p "HGET SUCCESSFUL"
+        data = nil
+        redis do |r|
+          data = r.hget(:user, id)
+        end
+        if data
           Marshal.load(data)
         end
       end
     end
 
 
-    # Stores up to @days_to_store worth of message counts for a particular
+    # Stores up to days_to_store worth of message counts for a particular
     # user/mailbox/metric combination.
     # We don't keep track of the date of each message count - this is quite
     # dumb and just stores a list of figures, one per day.
     class Mailbox < RedisBase
 
-      def initialize(redis_url=nil)
-        super(redis_url)
-        @redis = Redis::Namespace.new(:mailboxes, :redis => @redis)
+      def namespace
+        :mailboxes
+      end
 
-        @days_to_store = 30
+      def days_to_store
+        30
       end
 
       # For an array of mailboxes, store the count for each one.
@@ -84,21 +99,27 @@ module LpGmail
         key = make_key(id, mailbox_name, metric)
         field = Date.today().strftime('%Y%m%d')
 
-        redis.hset(key, field, count)
+        redis do |r|
+          r.hset(key, field, count)
+        end
 
         expire_counts(key)
       end
 
       # For a particular user/mailbox/metric combination (key),
-      # delete any date=>count entries which are older than @days_to_store.
+      # delete any date=>count entries which are older than days_to_store.
       # (Not sure this is the best way to do this?)
       def expire_counts(key)
         # The oldest day we want to keep, like 20130317
-        oldest_date = (Date.today() - @days_to_store - 1).strftime('%Y%m%d').to_i
+        oldest_date = (Date.today() - days_to_store - 1).strftime('%Y%m%d').to_i
         fields_to_delete = []
 
         # Each of the fields is like '20130317'.
-        redis.hkeys(key).sort!.each do |field|
+        keys = nil
+        redis do |r|
+          keys = r.hkeys(key)
+        end
+        keys.sort!.each do |field|
           if field.to_i < oldest_date
             fields_to_delete.push(field)
           else
@@ -107,13 +128,17 @@ module LpGmail
         end
 
         if fields_to_delete.length > 0
-          @redis.hdel('a', fields_to_delete)
+          redis do |r|
+            r.hdel('a', fields_to_delete)
+          end
         end
       end
 
       # Delete a particular user/mailbox/metric's data. 
       def del(id, mailbox_name, metric)
-        redis.del( make_key(id, mailbox_name, metric) )
+        redis do |r|
+          r.del( make_key(id, mailbox_name, metric) )
+        end
       end
 
       # Get the array of daily counts for a user/mailbox/metric combination.
@@ -123,7 +148,10 @@ module LpGmail
         # Will result in an array of arrays, like:
         # [["20130112", "34"], ["20130509", "31"], ... ]
         p "HGETALL #{id}:#{mailbox_name}:#{metric}"
-        arr = redis.hgetall(make_key(id, mailbox_name, metric)).sort
+        arr = nil
+        redis do |r|
+          arr = r.hgetall(make_key(id, mailbox_name, metric)).sort
+        end
         # Turn all those strings to ints.
         arr.map! { |d| [ d[0].to_i, d[1].to_i ] }
         return arr

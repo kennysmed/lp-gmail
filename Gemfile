@@ -1,6 +1,7 @@
 source 'https://rubygems.org'
 ruby '1.9.3'
 
+gem 'connection_pool'
 gem 'gmail_xoauth'
 gem 'json'
 gem 'oauth2'

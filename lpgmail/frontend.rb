@@ -2,41 +2,19 @@
 require 'json'
 require 'sinatra/base'
 require 'sinatra/config_file'
+require 'redis'
+require 'connection_pool'
 require 'lpgmail/gmail'
 require 'lpgmail/store'
 
 
-  module LpGmail
-    class Frontend < Sinatra::Base
-      register Sinatra::ConfigFile
+module LpGmail
+  class Frontend < Sinatra::Base
+    register Sinatra::ConfigFile
 
-      set :sessions, true
-      set :public_folder, 'public'
-      set :views, settings.root + '/../views'
-
-
-      def initialize
-      super()
-      # Don't call these directly - use the gmail() and user_store() methods.
-      @gmail = nil
-      @user_store = nil 
-      @mailbox_store
-    end
-
-
-    def gmail
-      @gmail ||= LpGmail::Gmail.new(settings.google_client_id,
-                                    settings.google_client_secret)
-    end 
-
-    def user_store
-      @user_store ||= LpGmail::Store::User.new(settings.redis_url)
-    end
-
-    def mailbox_store
-      @mailbox_store ||= LpGmail::Store::Mailbox.new(settings.redis_url)
-    end
-
+    set :sessions, true
+    set :public_folder, 'public'
+    set :views, settings.root + '/../views'
 
     configure do
 
@@ -77,6 +55,32 @@ require 'lpgmail/store'
 
 
     helpers do
+
+      def redis_pool
+        @redis_pool ||= ConnectionPool.new(:size => 8, :timeout => 5) do
+          if settings.redis_url
+            redis_uri = URI.parse(settings.redis_url)
+            client = ::Redis.new(:host => redis_uri.host,
+                                 :port => redis_uri.port,
+                                 :password => redis_uri.password)
+          else
+            client = ::Redis.new
+          end
+        end
+      end
+
+      def gmail
+        @gmail ||= LpGmail::Gmail.new(settings.google_client_id,
+                                      settings.google_client_secret)
+      end 
+
+      def user_store
+        @user_store ||= LpGmail::Store::User.new(redis_pool)
+      end
+
+      def mailbox_store
+        @mailbox_store ||= LpGmail::Store::Mailbox.new(redis_pool)
+      end
 
       # Does the OAuth and IMAP authentication, after which @gmail can do
       # things like fetch mailbox data.
