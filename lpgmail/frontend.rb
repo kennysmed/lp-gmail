@@ -175,8 +175,6 @@ module LpGmail
 
 
     get '/tester/:n' do |total|
-
-      p "TOTAL: #{total}"
       for n in (1..total.to_i)
         p '-----------------------------------'
         id = user_store.store("test-token-#{rand(999999)}",
