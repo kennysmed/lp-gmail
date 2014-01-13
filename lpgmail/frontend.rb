@@ -174,9 +174,9 @@ module LpGmail
     end
 
 
-    get '/tester/:n' do |n|
+    get '/tester/:n' do |total|
 
-      for n in (1..n)
+      for n in (1..total)
         p '-----------------------------------'
         id = user_store.store("test-token-#{rand(999999)}",
                              [{:name=>'INBOX', :metric=>'total'}])
@@ -184,7 +184,7 @@ module LpGmail
         p "User del"
         user_store.del(id)
       end
-      p "DONE #{n} time(s)"
+      p "DONE #{total} time(s)"
     end
 
 
