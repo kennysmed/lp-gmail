@@ -175,6 +175,16 @@ module LpGmail
 
 
     get '/tester/:n' do |total|
+      if settings.production?
+        p "ENV: production"
+      elsif settings.development?
+        p "ENV: development"
+      elsif settings.test?
+        p "ENV: test"
+      else
+        p "ENV: something else"
+      end
+
       for n in (1..total.to_i)
         p '-----------------------------------'
         id = user_store.store("test-token-#{rand(999999)}",
