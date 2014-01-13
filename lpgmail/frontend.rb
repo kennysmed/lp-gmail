@@ -52,23 +52,22 @@ module LpGmail
       if ENV['REDISCLOUD_URL'] != nil
         set :redis_url, ENV['REDISCLOUD_URL']
       end
+
+
+        #@redis_pool ||= ConnectionPool.new(:size => 8, :timeout => 5) do
+          if settings.redis_url
+            redis_uri = URI.parse(settings.redis_url)
+            set :redis, ::Redis.new(:host => redis_uri.host,
+                                 :port => redis_uri.port,
+                                 :password => redis_uri.password)
+          else
+            set :redis, ::Redis.new
+          end
+        #end
     end
 
 
     helpers do
-
-      def redis_pool
-        @redis_pool ||= ConnectionPool.new(:size => 8, :timeout => 5) do
-          if settings.redis_url
-            redis_uri = URI.parse(settings.redis_url)
-            client = ::Redis.new(:host => redis_uri.host,
-                                 :port => redis_uri.port,
-                                 :password => redis_uri.password)
-          else
-            client = ::Redis.new
-          end
-        end
-      end
 
       def gmail
         @gmail ||= LpGmail::Gmail.new(settings.google_client_id,
@@ -190,18 +189,18 @@ module LpGmail
     get '/tester2/:n' do |total|
       for n in (1..total.to_i)
         p '-----------------------------------'
-        redis_pool.with do |r|
+        #redis_pool.with do |r|
           id = UUID.generate
           p "SET"
-          r.hset(:user, id,
+          settings.redis.hset(:user, id,
                  Marshal.dump({:refresh_token => "test-token-#{rand(999999)}",
                              :mailboxes => [{:name=>'INBOX', :metric=>'total'}]})
                 )
           p "GET"
-          r.hget(:user, id)
+          settings.redis.hget(:user, id)
           p "DEL"
-          r.hdel(:user, id)
-        end
+          settings.redis.hdel(:user, id)
+        #end
       end
       p "DONE #{total} time(s)"
     end
