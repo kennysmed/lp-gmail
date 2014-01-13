@@ -173,6 +173,18 @@ module LpGmail
     get '/' do
     end
 
+    get '/tester/' do
+      p "User store"
+      id = user_store.store("test-token-#{rand(999999)}",
+                           [{:name=>'INBOX', :metric=>'total'}])
+      p "User store done"
+      p "User get"
+      user_store.get(id)
+      p "User get done"
+      p "User del"
+      user_store.del(id)
+      p "User del done"
+    end
 
     # The user has just come here from BERG Cloud to authenticate with Google.
     get '/configure/' do
