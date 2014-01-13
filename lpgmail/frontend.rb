@@ -173,17 +173,21 @@ module LpGmail
     get '/' do
     end
 
-    get '/tester/' do
-      for n in (1..11)
-        p "User store"
+
+    get '/tester/:n' do |n|
+
+      for n in (1..n)
+        p '-----------------------------------'
         id = user_store.store("test-token-#{rand(999999)}",
                              [{:name=>'INBOX', :metric=>'total'}])
-        p "User get"
         user_store.get(id)
         p "User del"
         user_store.del(id)
       end
+      p "DONE #{n} time(s)"
     end
+
+
 
     # The user has just come here from BERG Cloud to authenticate with Google.
     get '/configure/' do
