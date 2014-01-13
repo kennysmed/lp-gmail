@@ -6,6 +6,7 @@ require 'redis'
 require 'connection_pool'
 require 'lpgmail/gmail'
 require 'lpgmail/store'
+require 'uuid'
 
 
 module LpGmail
@@ -175,16 +176,6 @@ module LpGmail
 
 
     get '/tester/:n' do |total|
-      if settings.production?
-        p "ENV: production"
-      elsif settings.development?
-        p "ENV: development"
-      elsif settings.test?
-        p "ENV: test"
-      else
-        p "ENV: something else"
-      end
-
       for n in (1..total.to_i)
         p '-----------------------------------'
         id = user_store.store("test-token-#{rand(999999)}",
@@ -196,7 +187,24 @@ module LpGmail
       p "DONE #{total} time(s)"
     end
 
-
+    get '/tester2/:n' do |total|
+      for n in (1..total.to_i)
+        p '-----------------------------------'
+        redis_pool.with do |r|
+          id = UUID.generate
+          p "SET"
+          r.hset(:user, id,
+                 Marshal.dump({:refresh_token => "test-token-#{rand(999999)}",
+                             :mailboxes => [{:name=>'INBOX', :metric=>'total'}]})
+                )
+          p "GET"
+          r.hget(:user, id)
+          p "DEL"
+          r.hdel(:user, id)
+        end
+      end
+      p "DONE #{total} time(s)"
+    end
 
     # The user has just come here from BERG Cloud to authenticate with Google.
     get '/configure/' do
