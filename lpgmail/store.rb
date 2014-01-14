@@ -10,15 +10,13 @@ module LpGmail
     class RedisBase
       attr_accessor :redis
 
-      # Expects a Redis ConnectionPool object.
-      def initialize(redis_pool)
-        @redis_pool = redis_pool
+      # Expects a Redis connection.
+      def initialize(redis_connection)
+        @redis = redis_connection
       end
 
       def redis
-        @redis_pool.with do |r|
-          yield ::Redis::Namespace.new(namespace, :redis => r)
-        end
+        ::Redis::Namespace.new(namespace, :redis => @redis)
       end
     end
 
@@ -40,26 +38,18 @@ module LpGmail
       def store(refresh_token, mailboxes)
         id = UUID.generate
         p "HSET :user #{id}"
-        redis do |r|
-          r.hset(:user, id, Marshal.dump({:refresh_token => refresh_token,
+        redis.hset(:user, id, Marshal.dump({:refresh_token => refresh_token,
                                             :mailboxes => mailboxes}))
-        end
         return id
       end
 
       def del(id)
-        redis do |r|
-          r.hdel(:user, id)
-        end
+        redis.hdel(:user, id)
       end
 
       def get(id)
         p "HGET :user #{id}"
-        data = nil
-        redis do |r|
-          data = r.hget(:user, id)
-        end
-        if data
+        if data = redis.hget(:user, id)
           Marshal.load(data)
         end
       end
@@ -99,9 +89,7 @@ module LpGmail
         key = make_key(id, mailbox_name, metric)
         field = Date.today().strftime('%Y%m%d')
 
-        redis do |r|
-          r.hset(key, field, count)
-        end
+        redis.hset(key, field, count)
 
         expire_counts(key)
       end
@@ -115,11 +103,7 @@ module LpGmail
         fields_to_delete = []
 
         # Each of the fields is like '20130317'.
-        keys = nil
-        redis do |r|
-          keys = r.hkeys(key)
-        end
-        keys.sort!.each do |field|
+        redis.hkeys(key).sort!.each do |field|
           if field.to_i < oldest_date
             fields_to_delete.push(field)
           else
@@ -128,17 +112,13 @@ module LpGmail
         end
 
         if fields_to_delete.length > 0
-          redis do |r|
-            r.hdel('a', fields_to_delete)
-          end
+          redis.hdel('a', fields_to_delete)
         end
       end
 
       # Delete a particular user/mailbox/metric's data. 
       def del(id, mailbox_name, metric)
-        redis do |r|
-          r.del( make_key(id, mailbox_name, metric) )
-        end
+        redis.del( make_key(id, mailbox_name, metric) )
       end
 
       # Get the array of daily counts for a user/mailbox/metric combination.
@@ -148,10 +128,7 @@ module LpGmail
         # Will result in an array of arrays, like:
         # [["20130112", "34"], ["20130509", "31"], ... ]
         p "HGETALL #{id}:#{mailbox_name}:#{metric}"
-        arr = nil
-        redis do |r|
-          arr = r.hgetall(make_key(id, mailbox_name, metric)).sort
-        end
+        arr = redis.hgetall(make_key(id, mailbox_name, metric)).sort
         # Turn all those strings to ints.
         arr.map! { |d| [ d[0].to_i, d[1].to_i ] }
         return arr

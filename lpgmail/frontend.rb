@@ -3,7 +3,6 @@ require 'json'
 require 'sinatra/base'
 require 'sinatra/config_file'
 require 'redis'
-require 'connection_pool'
 require 'lpgmail/gmail'
 require 'lpgmail/store'
 require 'uuid'
@@ -53,17 +52,15 @@ module LpGmail
         set :redis_url, ENV['REDISCLOUD_URL']
       end
 
-
-        #@redis_pool ||= ConnectionPool.new(:size => 8, :timeout => 5) do
-          if settings.redis_url
-            redis_uri = URI.parse(settings.redis_url)
-            set :redis, ::Redis.new(:host => redis_uri.host,
-                                 :port => redis_uri.port,
-                                 :password => redis_uri.password)
-          else
-            set :redis, ::Redis.new
-          end
-        #end
+      # The Redis connection will be available as settings.redis
+      if settings.redis_url
+        redis_uri = URI.parse(settings.redis_url)
+        set :redis, ::Redis.new(:host => redis_uri.host,
+                               :port => redis_uri.port,
+                               :password => redis_uri.password)
+      else
+        set :redis, ::Redis.new
+      end
     end
 
 
@@ -75,11 +72,11 @@ module LpGmail
       end 
 
       def user_store
-        @user_store ||= LpGmail::Store::User.new(redis_pool)
+        @user_store ||= LpGmail::Store::User.new(settings.redis)
       end
 
       def mailbox_store
-        @mailbox_store ||= LpGmail::Store::Mailbox.new(redis_pool)
+        @mailbox_store ||= LpGmail::Store::Mailbox.new(settings.redis)
       end
 
       # Does the OAuth and IMAP authentication, after which @gmail can do

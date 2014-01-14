@@ -2,7 +2,6 @@ GEM
   remote: https://rubygems.org/
   specs:
     backports (3.3.0)
-    connection_pool (1.2.0)
     daemons (1.1.8)
     eventmachine (1.0.3)
     faraday (0.8.7)
@@ -58,7 +57,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  connection_pool
   gmail_xoauth
   json
   oauth2
