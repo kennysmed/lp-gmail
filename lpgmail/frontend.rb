@@ -53,6 +53,8 @@ module LpGmail
       end
 
       # The Redis connection will be available as settings.redis
+      # Having it as a Sinatra setting means it's created only once for the
+      # app, not once for each request.
       if settings.redis_url
         redis_uri = URI.parse(settings.redis_url)
         set :redis, ::Redis.new(:host => redis_uri.host,
@@ -170,37 +172,6 @@ module LpGmail
     get '/' do
     end
 
-
-    get '/tester/:n' do |total|
-      for n in (1..total.to_i)
-        p '-----------------------------------'
-        id = user_store.store("test-token-#{rand(999999)}",
-                             [{:name=>'INBOX', :metric=>'total'}])
-        user_store.get(id)
-        p "User del"
-        user_store.del(id)
-      end
-      p "DONE #{total} time(s)"
-    end
-
-    get '/tester2/:n' do |total|
-      for n in (1..total.to_i)
-        p '-----------------------------------'
-        #redis_pool.with do |r|
-          id = UUID.generate
-          p "SET"
-          settings.redis.hset(:user, id,
-                 Marshal.dump({:refresh_token => "test-token-#{rand(999999)}",
-                             :mailboxes => [{:name=>'INBOX', :metric=>'total'}]})
-                )
-          p "GET"
-          settings.redis.hget(:user, id)
-          p "DEL"
-          settings.redis.hdel(:user, id)
-        #end
-      end
-      p "DONE #{total} time(s)"
-    end
 
     # The user has just come here from BERG Cloud to authenticate with Google.
     get '/configure/' do

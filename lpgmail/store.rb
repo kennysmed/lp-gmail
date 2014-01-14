@@ -10,7 +10,6 @@ module LpGmail
     class RedisBase
       attr_accessor :redis
 
-      # Expects a Redis connection.
       def initialize(redis_connection)
         @redis = redis_connection
       end
